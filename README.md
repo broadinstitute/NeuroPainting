@@ -1,2 +1,4 @@
-# Image-based Profiling Workflow Template
-Data processing workflows for image-based profiling experiments
+# Neuronal Cell Painting Pilot
+
+Pilot experiments for establishing a protocol for neuronal Cell Painting.
+
