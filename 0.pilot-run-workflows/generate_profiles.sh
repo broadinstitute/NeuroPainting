@@ -3,7 +3,7 @@
 # NCP processing pipeline
 # Shantanu Singh, 2019
 #
-# Instructions to generate cell painting profiles for the NCP experiments
+# Instructions to generate cell painting profiles for the NCP pilot experiments
 # Pipeline generated using the profiling handbook:
 #     https://cytomining.github.io/profiling-handbook/
 
@@ -59,6 +59,8 @@ git clone git@github.com:CellProfiler/Distributed-CellProfiler.git
       
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/configure-tools-to-process-images.html#setup-distributed-cellprofiler
+
+# Follow these steps verbatim -- can't do this just yet because we don't have a pipeline
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#get-cellprofiler-pipelines
 
 # Specify pipeline set -- can't do this just yet because we don't have a pipeline
@@ -74,5 +76,4 @@ echo "BR00106976" > ${PLATES}
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#create-loaddata-csvs
-# Note: the cellpainting_scripts/config.ini file had not been set up correctly, and pe2loaddata got stuck
-# so I did it by hand (i.e. `parallel --dry-run` and then run each command)
+
