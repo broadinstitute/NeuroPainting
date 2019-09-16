@@ -55,14 +55,14 @@ git clone git@github.com:broadinstitute/pe2loaddata.git
 git clone git@github.com:broadinstitute/cytominer_scripts.git
 git clone git@github.com:CellProfiler/Distributed-CellProfiler.git
 
-# Copy config_files/config.yml to cellpainting_scripts/ (overwrite the existing file)
+# Copy config_files/config_CELLPAINTING.yml to cellpainting_scripts/config.yml (overwrite the existing file)
       
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/configure-tools-to-process-images.html#setup-distributed-cellprofiler
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#get-cellprofiler-pipelines
 
-# Specify pipeline set
-PIPELINE_SET=cellpainting_ipsc_20x_phenix_with_bf_bin1_cp3/
+# Specify pipeline set -- can't do this just yet because we don't have a pipeline
+# PIPELINE_SET=cellpainting_ipsc_20x_phenix_with_bf_bin1_cp3/
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#prepare-images
@@ -70,7 +70,7 @@ PIPELINE_SET=cellpainting_ipsc_20x_phenix_with_bf_bin1_cp3/
 # Create list of plates
 mkdir -p scratch/${BATCH_ID}/
 PLATES=$(readlink -f ~/efs/${PROJECT_NAME}/workspace/scratch/${BATCH_ID}/plates_to_process.txt)
-echo "cmqtlpl1.5-31-2019-mt cmqtlpl261-2019-mt"|tr " " "\n" > ${PLATES}
+echo "BR00106976" > ${PLATES}
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#create-loaddata-csvs
