@@ -1,5 +1,5 @@
 ---
-title: "Sample wells"
+title: "Sample wells for analysis"
 output: github_document
 ---
 
