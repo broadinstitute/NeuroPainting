@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # NCP processing pipeline
-# Shantanu Singh, 2019
+# Gregory Way, 2019 (adapted by Shantanu Singh)
 #
 # Instructions to generate cell painting profiles for the NCP pilot experiments
 # Pipeline generated using the profiling handbook:
@@ -29,13 +29,16 @@
 
 # Step 1.2: Define Variables
 PROJECT_NAME=2019_05_28_Neuronal_Cell_Painting
-BATCH_ID=NCP_PILOT_1
+BATCH_ID=NCP_STEM_1
 BUCKET=imaging-platform
 MAXPROCS=3 # m4.xlarge has 4 cores; keep 1 free
 mkdir -p ~/efs/${PROJECT_NAME}/workspace/
 cd ~/efs/${PROJECT_NAME}/workspace/
 mkdir -p log/${BATCH_ID}
-PLATES=$(readlink -f ~/efs/${PROJECT_NAME}/workspace/scratch/${BATCH_ID}/plates_to_process.txt)
+
+# the scripts were run verbatim for these  additional batches with appropriate modifications to 
+# SAMPLE_PLATE_ID and contents of $PLATES
+#BATCH_ID=NCP_STEM_1
 
 # Step 1.3 - Create an EBS temp directory for creating the backend
 mkdir ~/ebs_tmp
@@ -55,16 +58,18 @@ git clone git@github.com:broadinstitute/pe2loaddata.git
 git clone git@github.com:broadinstitute/cytominer_scripts.git
 git clone git@github.com:CellProfiler/Distributed-CellProfiler.git
 
-# Copy config_files/config_CELLPAINTING.yml to cellpainting_scripts/config.yml (overwrite the existing file)
+# Copy config_files/config.yml to cellpainting_scripts/ (overwrite the existing file)
       
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/configure-tools-to-process-images.html#setup-distributed-cellprofiler
-
-# Follow these steps verbatim -- can't do this just yet because we don't have a pipeline
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#get-cellprofiler-pipelines
 
-# Specify pipeline set -- can't do this just yet because we don't have a pipeline
-# PIPELINE_SET=cellpainting_ipsc_20x_phenix_with_bf_bin1_cp3/
+# Specify pipeline set
+PIPELINE_SET=cellpainting_ipsc_20x_phenix_with_bf_bin1_cp3/
+
+# NOTE:The actual version of the pipeline run was this:
+# https://github.com/broadinstitute/imaging-platform-pipelines/pull/17/commits/1c3ed24cffc042195e01b6bd791353a2f75fc450
+# which differs from the master branch only in the way the outputs are stored. 
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#prepare-images
@@ -72,8 +77,249 @@ git clone git@github.com:CellProfiler/Distributed-CellProfiler.git
 # Create list of plates
 mkdir -p scratch/${BATCH_ID}/
 PLATES=$(readlink -f ~/efs/${PROJECT_NAME}/workspace/scratch/${BATCH_ID}/plates_to_process.txt)
-echo "BR00106976" > ${PLATES}
+echo "cmqtlpl1.5-31-2019-mt cmqtlpl261-2019-mt"|tr " " "\n" > ${PLATES}
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#create-loaddata-csvs
+# Note: the cellpainting_scripts/config.ini file had not been set up correctly, and pe2loaddata got stuck
+# so I did it by hand (i.e. `parallel --dry-run` and then run each command)
+
+# Follow these steps verbatim
+# https://cytomining.github.io/profiling-handbook/setup-jobs.html#illumination-correction
+# https://cytomining.github.io/profiling-handbook/setup-jobs.html#analysis
+# but change the docker image for both 
+# `--cp_docker_image cellprofiler/cellprofiler:3.1.8`
+# This errored but the config files got created without a hitch. See https://github.com/broadinstitute/cmQTL/issues/14#issuecomment-505551405
+
+# Copy the `dcp_config_files` directory to `cellpainting_scripts`
+cp ../2018_06_05_cmQTL/1.profile-cell-lines/dcp_config_files/* ../cellpainting_scripts/dcp_config_files/
+
+# Follow these steps verbatim 
+# https://cytomining.github.io/profiling-handbook/run-jobs.html#run-illum-dcp
+# https://cytomining.github.io/profiling-handbook/run-jobs.html#dcp
+# https://cytomining.github.io/profiling-handbook/create-profiles.html#create-database-backend
+
+############################
+# Step 3 - Annotate
+############################
+# NOTE - The annotate step creates `augmented` profiles in the `backend` folder
+# `augmented` profiles represent aggregated per-well data annotated with metadata
+# Follow this step with some modifications (see below)
+# https://cytomining.github.io/profiling-handbook/create-profiles.html#annotate
+
+# Retrieve metadata information
+aws s3 sync s3://${BUCKET}/projects/${PROJECT_NAME}/workspace/metadata/${BATCH_ID}/ ~/efs/${PROJECT_NAME}/workspace/metadata/${BATCH_ID}/
+
+# Use cytominer_scripts to run annotation
+cd  ~/efs/${PROJECT_NAME}/workspace/software/cytominer_scripts
+
+parallel \
+  --no-run-if-empty \
+  --eta \
+  --joblog ../../log/${BATCH_ID}/annotate.log \
+  --results ../../log/${BATCH_ID}/annotate \
+  --files \
+  --keep-order \
+  ./annotate.R \
+  --batch_id ${BATCH_ID} \
+  --plate_id {1} :::: ${PLATES}
+
+############################
+# Step 4 - Normalize
+############################
+# Note - The normalize step creates `normalized` profiles in the `backend` folder
+# The step z-scores each feature using all wells (i.e. use all "non-dummy" wells)
+
+# Follow this step with some modifications (see below)
+# https://cytomining.github.io/profiling-handbook/create-profiles.html#normalize
+
+parallel \
+  --no-run-if-empty \
+  --eta \
+  --joblog ../../log/${BATCH_ID}/normalize.log \
+  --results ../../log/${BATCH_ID}/normalize \
+  --files \
+  --keep-order \
+  ./normalize.R \
+  --batch_id ${BATCH_ID} \
+  --plate_id {1} \
+  --subset \"Metadata_Well != \'\'\'dummy\'\'\'\" :::: ${PLATES}
+
+############################
+# Step 5 - Variable Selection
+############################
+# Follow this step with some modifications (no replicate correlation step; see below)
+# https://cytomining.github.io/profiling-handbook/create-profiles.html#select-variables
+
+# Note - Variable selection uses both normalized and unnormalized data
+mkdir -p ../../parameters/${BATCH_ID}/sample/
+
+# In the sampling steps below, we specify replicates = 1 because there is only 1 
+# replicate plate per platemap. Currently, sampling replicates within a plate is
+# not supported in cytominer_scripts
+
+# Step 5.0 - Sample normalized and unnormalized data
+# Normalized
+./sample.R \
+  --batch_id ${BATCH_ID} \
+  --pattern "_normalized.csv$" \
+  --replicates 1 \
+  --output ../../parameters/${BATCH_ID}/sample/${BATCH_ID}_normalized_sample.feather
+
+# Unnormalized
+./sample.R \
+  --batch_id ${BATCH_ID} \
+  --pattern "_augmented.csv$" \
+  --replicates 1 \
+  --output ../../parameters/${BATCH_ID}/sample/${BATCH_ID}_augmented_sample.feather
+
+# Using the sampled feather files, perform a series of three variable selection steps
+# Step 5.1 - Remove variables that have high correlations with other variables
+./preselect.R \
+  --batch_id ${BATCH_ID} \
+  --input ../../parameters/${BATCH_ID}/sample/${BATCH_ID}_normalized_sample.feather \
+  --operations correlation_threshold
+
+# Step 5.2 - Remove variables that have low variance
+./preselect.R \
+  --batch_id ${BATCH_ID} \
+  --input ../../parameters/${BATCH_ID}/sample/${BATCH_ID}_augmented_sample.feather \
+  --operations variance_threshold
+
+# Step 5.3 - Remove features known to be noisy
+SAMPLE_PLATE_ID='cmqtlpl1.5-31-2019-mt'
+echo "variable" > ../../parameters/${BATCH_ID}/variable_selection/manual.txt
+
+head -1 \
+  ../../backend/${BATCH_ID}/${SAMPLE_PLATE_ID}/${SAMPLE_PLATE_ID}.csv \
+  |tr "," "\n"|grep -v Meta|grep -E -v 'Granularity_14|Granularity_15|Granularity_16|Manders|RWC' >> \
+  ../../parameters/${BATCH_ID}/variable_selection/manual.txt
+
+# Step 5.4 - Apply the variable selection steps to the profiles
+# Note - This creates the _normalized_variable_selected.csv files in `backend`
+parallel \
+  --no-run-if-empty \
+  --eta \
+  --joblog ../../log/${BATCH_ID}/select.log \
+  --results ../../log/${BATCH_ID}/select \
+  --files \
+  --keep-order \
+  ./select.R \
+  --batch_id ${BATCH_ID} \
+  --plate_id {1} \
+  --filters variance_threshold,correlation_threshold,manual :::: ${PLATES}
+
+############################
+# Compute cell counts
+############################
+
+# If jumping in directly to this step, define BATCH_ID and PLATES
+# BATCH_ID=2019_06_10_Batch3
+# BATCH_ID=2019_08_15_Batch4 
+# BATCH_ID=2019_09_06_Batch5
+# PLATES=$(readlink -f ~/efs/${PROJECT_NAME}/workspace/scratch/${BATCH_ID}/plates_to_process.txt)
+
+cd ~/efs/${PROJECT_NAME}/workspace/software/cytominer_scripts
+
+mkdir -p ~/ebs_tmp/2018_06_05_cmQTL/workspace/backend/${BATCH_ID}
+
+parallel \
+  --no-run-if-empty \
+  --eta \
+  aws s3 sync \
+  --exclude '"*"' \
+  --include '"*.sqlite"' \
+  s3://imaging-platform/projects/2018_06_05_cmQTL/workspace/backend/${BATCH_ID}/{1}/ \
+  ~/ebs_tmp/2018_06_05_cmQTL/workspace/backend/${BATCH_ID}/{1}/ \
+  :::: ${PLATES}
+
+# cell counts
+parallel \
+  --no-run-if-empty \
+  --max-procs 1 \
+  --joblog ../../log/${BATCH_ID}/stats.log \
+  --results ../../log/${BATCH_ID}/stats \
+  --files \
+  --keep-order \
+  --eta \
+  ./stats.R  \
+  ~/ebs_tmp/2018_06_05_cmQTL/workspace/backend/${BATCH_ID}/{1}/{1}.sqlite \
+  -o ../../backend/${BATCH_ID}/{1}/{1}_count.csv \
+  :::: ${PLATES}
+
+# check rows
+parallel \
+  --no-run-if-empty \
+  --keep-order \
+  wc -l ../../backend/${BATCH_ID}/{1}/{1}_count.csv :::: \
+  ${PLATES}
+
+# remove sqlite
+parallel \
+  --no-run-if-empty \
+  --eta \
+  rm ~/ebs_tmp/2018_06_05_cmQTL/workspace/backend/${BATCH_ID}/{1}/{1}.sqlite \
+  :::: ${PLATES}
+
+############################
+# Step 6 - Audit
+############################
+
+# Audit for replicate reproducibility
+# https://cytomining.github.io/profiling-handbook/create-profiles.html#audit
+
+PLATE_MAPS=../../scratch/${BATCH_ID}/plate_maps.txt
+
+csvcut -c Plate_Map_Name \
+  ../../metadata/${BATCH_ID}/barcode_platemap.csv | \
+  tail -n +2|sort|uniq > \
+  ${PLATE_MAPS}
+  
+mkdir -p ../../audit/${BATCH_ID}/
+
+parallel \
+  --no-run-if-empty \
+  --eta \
+  --joblog ../../log/${BATCH_ID}/audit.log \
+  --results ../../log/${BATCH_ID}/audit \
+  --files \
+  --keep-order \
+  ./audit.R \
+  -b ${BATCH_ID} \
+  -m {1} \
+  -f _normalized_variable_selected.csv \
+  -o ../../audit/${BATCH_ID}/{1}_audit.csv \
+  -l ../../audit/${BATCH_ID}/{1}_audit_detailed.csv \
+  -p Metadata_Plate_Map_Name,Metadata_line_ID,Metadata_plating_density :::: ${PLATE_MAPS}
+  
+############################
+# Step 6 - Convert to other formats
+############################
+
+# Follow only the first part of this step 
+# https://cytomining.github.io/profiling-handbook/create-profiles.html#convert-to-other-formats
+# i.e.:
+
+parallel \
+  --no-run-if-empty \
+  --eta \
+  --joblog ../../log/${BATCH_ID}/csv2gct_backend.log \
+  --results ../../log/${BATCH_ID}/csv2gct_backend \
+  --files \
+  --keep-order \
+  ./csv2gct.R \
+  ../../backend/${BATCH_ID}/{1}/{1}_{2}.csv \
+  -o ../../backend/${BATCH_ID}/{1}/{1}_{2}.gct :::: ${PLATES} ::: augmented normalized normalized_variable_selected
+  
+############################
+# Step 7 - Upload data
+############################
+
+# Follow this step nearly verbatim 
+# https://cytomining.github.io/profiling-handbook/create-profiles.html#upload-data
+
+parallel \
+  aws s3 sync \
+  ../../{1}/${BATCH_ID}/ \
+  s3://${BUCKET}/projects/${PROJECT_NAME}/workspace/{1}/${BATCH_ID}/ ::: audit backend batchfiles  load_data_csv log metadata parameters scratch
 
