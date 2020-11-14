@@ -30,6 +30,7 @@
 # Step 1.2: Define Variables
 PROJECT_NAME=2019_05_28_Neuronal_Cell_Painting
 BATCH_ID=NCP_STEM_1
+SAMPLE_FULL_PLATE_NAME=BR_NCP_STEM_1
 BUCKET=imaging-platform
 MAXPROCS=3 # m4.xlarge has 4 cores; keep 1 free
 mkdir -p ~/efs/${PROJECT_NAME}/workspace/
@@ -61,6 +62,7 @@ git clone git@github.com:CellProfiler/Distributed-CellProfiler.git
 # Copy config_files/config.yml to cellpainting_scripts/ (overwrite the existing file)
       
 # Follow these steps verbatim
+# https://cytomining.github.io/profiling-handbook/configure-tools-to-process-images.html#update-some-packages
 # https://cytomining.github.io/profiling-handbook/configure-tools-to-process-images.html#setup-distributed-cellprofiler
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#get-cellprofiler-pipelines
 
@@ -77,12 +79,17 @@ PIPELINE_SET=cellpainting_ipsc_20x_phenix_with_bf_bin1_cp3/
 # Create list of plates
 mkdir -p scratch/${BATCH_ID}/
 PLATES=$(readlink -f ~/efs/${PROJECT_NAME}/workspace/scratch/${BATCH_ID}/plates_to_process.txt)
-echo "cmqtlpl1.5-31-2019-mt cmqtlpl261-2019-mt"|tr " " "\n" > ${PLATES}
+echo "BR_NCP_STEM_1"|tr " " "\n" > ${PLATES}
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#create-loaddata-csvs
-# Note: the cellpainting_scripts/config.ini file had not been set up correctly, and pe2loaddata got stuck
+# Note: 
+# - the cellpainting_scripts/config.ini file had not been set up correctly, and pe2loaddata got stuck
 # so I did it by hand (i.e. `parallel --dry-run` and then run each command)
+# - pe2loaddata has been recently updated but there are no instructions for install or use. 
+# I thus checked out an old commit 
+# cd ~/efs/2019_05_28_Neuronal_Cell_Painting/workspace/software/pe2loaddata
+# git checkout 62b5e35647d2b6e7fafab4ae4b189b4f2cfecdad
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-jobs.html#illumination-correction
@@ -92,7 +99,7 @@ echo "cmqtlpl1.5-31-2019-mt cmqtlpl261-2019-mt"|tr " " "\n" > ${PLATES}
 # This errored but the config files got created without a hitch. See https://github.com/broadinstitute/cmQTL/issues/14#issuecomment-505551405
 
 # Copy the `dcp_config_files` directory to `cellpainting_scripts`
-cp ../2018_06_05_cmQTL/1.profile-cell-lines/dcp_config_files/* ../cellpainting_scripts/dcp_config_files/
+cp ../2019_05_28_Neuronal_Cell_Painting/.pilot-run-workflows/dcp_config_files/* ../cellpainting_scripts/dcp_config_files/
 
 # Follow these steps verbatim 
 # https://cytomining.github.io/profiling-handbook/run-jobs.html#run-illum-dcp
