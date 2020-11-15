@@ -39,10 +39,13 @@ mkdir -p log/${BATCH_ID}
 
 # the scripts were run verbatim for these  additional batches with appropriate modifications to 
 # SAMPLE_PLATE_ID and contents of $PLATES
-#BATCH_ID=NCP_STEM_1
+#BATCH_ID=NCP_PILOT_3
+#SAMPLE_FULL_PLATE_NAME=BR_NCP_PILOT_3
+#BATCH_ID=NCP_PILOT_3B
+#SAMPLE_FULL_PLATE_NAME=MAtt_ICC_test
 
 # Step 1.3 - Create an EBS temp directory for creating the backend
-mkdir ~/ebs_tmp
+mkdir -p ~/ebs_tmp
 
 ############################
 # Step 2 - Configure Tools to Process Images
@@ -68,6 +71,7 @@ git clone git@github.com:CellProfiler/Distributed-CellProfiler.git
 
 # Specify pipeline set
 PIPELINE_SET=cellpainting_ipsc_20x_phenix_with_bf_bin1_cp3/
+#PIPELINE_SET=cellpainting_ipsc_20x_phenix_with_bf_bin1_cp3/
 
 # NOTE:The actual version of the pipeline run was this:
 # https://github.com/broadinstitute/imaging-platform-pipelines/pull/17/commits/1c3ed24cffc042195e01b6bd791353a2f75fc450
@@ -80,6 +84,7 @@ PIPELINE_SET=cellpainting_ipsc_20x_phenix_with_bf_bin1_cp3/
 mkdir -p scratch/${BATCH_ID}/
 PLATES=$(readlink -f ~/efs/${PROJECT_NAME}/workspace/scratch/${BATCH_ID}/plates_to_process.txt)
 echo "BR_NCP_STEM_1"|tr " " "\n" > ${PLATES}
+#echo "BR_NCP_PILOT_3"|tr " " "\n" > ${PLATES}
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#create-loaddata-csvs
