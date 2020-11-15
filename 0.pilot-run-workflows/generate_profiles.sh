@@ -85,6 +85,7 @@ mkdir -p scratch/${BATCH_ID}/
 PLATES=$(readlink -f ~/efs/${PROJECT_NAME}/workspace/scratch/${BATCH_ID}/plates_to_process.txt)
 echo "BR_NCP_STEM_1"|tr " " "\n" > ${PLATES}
 #echo "BR_NCP_PILOT_3"|tr " " "\n" > ${PLATES}
+#echo "MAtt_ICC_test"|tr " " "\n" > ${PLATES}
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#create-loaddata-csvs
@@ -110,6 +111,30 @@ cp ../neuronal-cell-painting/0.pilot-run-workflows/dcp_config_files/* ../cellpai
 # https://cytomining.github.io/profiling-handbook/run-jobs.html#run-illum-dcp
 # https://cytomining.github.io/profiling-handbook/run-jobs.html#dcp
 # https://cytomining.github.io/profiling-handbook/create-profiles.html#create-database-backend
+
+
+############################
+# Step 2B - Aggregate for plates that don't have standard compartments 
+############################
+
+# First install cytomining/cytotools
+# In R:
+# devtools::install_github("cytomining/cytotools")
+# After installing this package, run the snippet below, and add the output to your PATH:
+# normalizePath(file.path(path.package("cytotools"), "scripts"))
+
+# Run this https://cytomining.github.io/profiling-handbook/create-profiles.html#create-database-backend
+# before do the following before running `collate.R`
+
+cd  ~/ebs_tmp/${PROJECT_NAME}/workspace/software/cytominer_scripts
+
+cp collate.R collate_neurons.R
+
+# Now edit the line
+# aggregate_cmd <- paste("./aggregate.R", cache_backend_file, "-o", cache_aggregated_file)
+# to
+# aggregate_cmd <- paste("/home/ubuntu/R/library/cytotools/scripts/cytotools_aggregate", cache_backend_file, "-c", "CellBodies,Cytoplasm,Nuclei,Neurites", "-o", cache_aggregated_file)
+# and then run the collate step, but replace `./collate.R` with `./collate_neurons.R`
 
 ############################
 # Step 3 - Annotate
