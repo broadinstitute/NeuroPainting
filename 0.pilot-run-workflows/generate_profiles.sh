@@ -133,7 +133,7 @@ cp collate.R collate_neurons.R
 # Now edit the line
 # aggregate_cmd <- paste("./aggregate.R", cache_backend_file, "-o", cache_aggregated_file)
 # to
-# aggregate_cmd <- paste("/home/ubuntu/R/library/cytotools/scripts/cytotools_aggregate", cache_backend_file, "-c", "CellBodies,Cytoplasm,Nuclei,Neurites", "-o", cache_aggregated_file)
+# aggregate_cmd <- paste("/home/ubuntu/R/library/cytotools/scripts/cytotools_aggregate", cache_backend_file, "-c", "CellBodies,Cytoplasm,Nuclei,Neurites", "-t", "Image", "-o", cache_aggregated_file)
 # and then run the collate step, but replace `./collate.R` with `./collate_neurons.R`
 
 ############################
