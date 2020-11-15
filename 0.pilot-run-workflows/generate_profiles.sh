@@ -104,7 +104,7 @@ echo "BR_NCP_STEM_1"|tr " " "\n" > ${PLATES}
 # This errored but the config files got created without a hitch. See https://github.com/broadinstitute/cmQTL/issues/14#issuecomment-505551405
 
 # Copy the `dcp_config_files` directory to `cellpainting_scripts`
-cp ../2019_05_28_Neuronal_Cell_Painting/.pilot-run-workflows/dcp_config_files/* ../cellpainting_scripts/dcp_config_files/
+cp ../neuronal-cell-painting/0.pilot-run-workflows/dcp_config_files/* ../cellpainting_scripts/dcp_config_files/
 
 # Follow these steps verbatim 
 # https://cytomining.github.io/profiling-handbook/run-jobs.html#run-illum-dcp
