@@ -171,6 +171,12 @@ parallel \
 # Follow this step with some modifications (see below)
 # https://cytomining.github.io/profiling-handbook/create-profiles.html#normalize
 
+# for neurons
+compartments=CellBodies,CellBodiesPlusNeurites,Cytoplasm,Nuclei,Neurites
+
+# for regular cells (need to verify)
+compartments=cells,cytoplasm,nuclei
+
 parallel \
   --no-run-if-empty \
   --eta \
@@ -181,7 +187,7 @@ parallel \
   /home/ubuntu/R/library/cytotools/scripts/cytotools_normalize \
   --batch_id ${BATCH_ID} \
   --workspace_dir ../../ \
-  --compartments CellBodies,CellBodiesPlusNeurites,Cytoplasm,Nuclei,Neurites \
+  --compartments ${compartments} \
   --plate_id {1} :::: ${PLATES}
 
 ############################
@@ -226,7 +232,8 @@ mkdir -p ../../parameters/${BATCH_ID}/sample/
   --operations variance_threshold
 
 # Step 5.3 - Remove features known to be noisy
-SAMPLE_PLATE_ID='BR_NCP_STEM_1'
+#SAMPLE_PLATE_ID='BR_NCP_STEM_1'
+SAMPLE_PLATE_ID='BR_NCP_PILOT_3'
 echo "variable" > ../../parameters/${BATCH_ID}/variable_selection/manual.txt
 
 head -1 \
@@ -271,6 +278,20 @@ parallel \
   ~/ebs_tmp/${PROJECT_NAME}/workspace/backend/${BATCH_ID}/{1}/ \
   :::: ${PLATES}
 
+
+# create a file stats_neurons.R with these diffs
+# diff stats.R stats_neurons.R
+# < stats <- tbl(src = db, "image") %>%
+# <   select(Metadata_Plate, Metadata_Well, Count_Cells) %>%
+# ---
+# > stats <- tbl(src = db, "Image") %>%
+# >   select(Metadata_Plate, Metadata_Well, Count_Nuclei) %>%
+# 27c27
+# <   summarize(Count_Cells = sum(Count_Cells)) %>%
+# ---
+# >   summarize(Count_Nuclei = sum(Count_Nuclei)) %>%
+
+
 # cell counts
 parallel \
   --no-run-if-empty \
@@ -280,7 +301,7 @@ parallel \
   --files \
   --keep-order \
   --eta \
-  ./stats.R  \
+  ./stats_neurons.R  \
   ~/ebs_tmp/${PROJECT_NAME}/workspace/backend/${BATCH_ID}/{1}/{1}.sqlite \
   -o ../../backend/${BATCH_ID}/{1}/{1}_count.csv \
   :::: ${PLATES}
@@ -315,6 +336,12 @@ csvcut -c Plate_Map_Name \
   
 mkdir -p ../../audit/${BATCH_ID}/
 
+# for NCP_STEM_1
+replicate_grouping_variables=Metadata_Plate_Map_Name,Metadata_line_ID,Metadata_plating_density
+
+# for NCP_PILOT_3
+replicate_grouping_variables=Metadata_Plate_Map_Name,Metadata_line_condition,Metadata_compound_ID,Metadata_plating_density
+
 parallel \
   --no-run-if-empty \
   --eta \
@@ -328,7 +355,7 @@ parallel \
   -f _normalized_variable_selected.csv \
   -o ../../audit/${BATCH_ID}/{1}_audit.csv \
   -l ../../audit/${BATCH_ID}/{1}_audit_detailed.csv \
-  -p Metadata_Plate_Map_Name,Metadata_line_ID,Metadata_plating_density :::: ${PLATE_MAPS}
+  -p ${replicate_grouping_variables} :::: ${PLATE_MAPS}
   
 ############################
 # Step 6 - Convert to other formats
@@ -359,5 +386,5 @@ parallel \
 parallel \
   aws s3 sync \
   ../../{1}/${BATCH_ID}/ \
-  s3://${BUCKET}/projects/${PROJECT_NAME}/workspace/{1}/${BATCH_ID}/ ::: audit backend batchfiles  load_data_csv log metadata parameters scratch
+  s3://${BUCKET}/projects/${PROJECT_NAME}/workspace/{1}/${BATCH_ID}/ ::: audit backend batchfiles load_data_csv log metadata parameters scratch
 
