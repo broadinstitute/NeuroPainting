@@ -133,7 +133,7 @@ cp collate.R collate_neurons.R
 # Now edit the line
 # aggregate_cmd <- paste("./aggregate.R", cache_backend_file, "-o", cache_aggregated_file)
 # to
-# aggregate_cmd <- paste("/home/ubuntu/R/library/cytotools/scripts/cytotools_aggregate", cache_backend_file, "-c", "CellBodies,Cytoplasm,Nuclei,Neurites", "-t", "Image", "-o", cache_aggregated_file)
+# aggregate_cmd <- paste("/home/ubuntu/R/library/cytotools/scripts/cytotools_aggregate", cache_backend_file, "-c", "CellBodies,CellBodiesPlusNeurites,Cytoplasm,Nuclei,Neurites", "-t", "Image", "-o", cache_aggregated_file)
 # and then run the collate step, but replace `./collate.R` with `./collate_neurons.R`
 
 ############################
@@ -147,7 +147,7 @@ cp collate.R collate_neurons.R
 # Retrieve metadata information
 aws s3 sync s3://${BUCKET}/projects/${PROJECT_NAME}/workspace/metadata/${BATCH_ID}/ ~/efs/${PROJECT_NAME}/workspace/metadata/${BATCH_ID}/
 
-# Use cytominer_scripts to run annotation
+# Use cytotools to run annotation
 cd  ~/efs/${PROJECT_NAME}/workspace/software/cytominer_scripts
 
 parallel \
@@ -157,7 +157,8 @@ parallel \
   --results ../../log/${BATCH_ID}/annotate \
   --files \
   --keep-order \
-  ./annotate.R \
+  /home/ubuntu/R/library/cytotools/scripts/cytotools_annotate \
+  --workspace_directory ../../ \
   --batch_id ${BATCH_ID} \
   --plate_id {1} :::: ${PLATES}
 
@@ -180,6 +181,7 @@ parallel \
   /home/ubuntu/R/library/cytotools/scripts/cytotools_normalize \
   --batch_id ${BATCH_ID} \
   --workspace_dir ../../ \
+  --compartments CellBodies,CellBodiesPlusNeurites,Cytoplasm,Nuclei,Neurites \
   --plate_id {1} :::: ${PLATES}
 
 ############################
