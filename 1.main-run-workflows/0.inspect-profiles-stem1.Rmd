@@ -1,6 +1,5 @@
 ---
 title: "Inspect profiles"
-subtitle: "cmQTL project"
 author: "Shantanu Singh"
 date: "Nov 2020"
 output: github_document
