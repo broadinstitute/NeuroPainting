@@ -1,9 +1,7 @@
 # Run profiling workflows on NCP Experiments
 
-`../0.pilot-run-workflows/generate_profiles.sh` is used to produce profiles
+`generate_profiles.sh` is used to produce profiles
 
-
-Our goal with this module is to generate profiles for 308 stem cell lines.
 
 There are 3 profiles files for each plate, stored in [profiles](https://github.com/broadinstitute/neuronal-cell-painting/tree/master/1.main-run-workflows/profiles), corresponding to different transformations of the data:
 
@@ -120,7 +118,7 @@ find ${external_backend_dir} -type f -name "*.csv" -exec ./csv2gz.py {} \;
 Sync them to this repo
 
 ```sh
-mkdir -p 
+mkdir -p
 rsync -arzv --include="*/" --include="*.gz" --exclude "*" ${external_backend_dir}/ ${repo_working_dir}/profiles/${BATCH_ID}/
 ```
 
