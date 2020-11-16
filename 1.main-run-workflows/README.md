@@ -35,18 +35,54 @@ These are the details of batches - when they were imaged and the plate IDs of th
 | 2020-09-24 | NCP_STEM_1 | BR_NCP_STEM_1 |
 
 
-## Instructions for adding Level 3,4a,4b CSV files, processed using `cytominer`, to this repo
+## Instructions for copying data to this repo
+
+Set variables
+
+```sh
+BATCH_ID=NCP_STEM_1
+
+repo_working_dir=~/work/projects/2019_05_28_Neuronal_Cell_Painting/workspace/software/neuronal-cell-painting/1.main-run-workflows
+
+workspace_dir=~/work/projects/2019_05_28_Neuronal_Cell_Painting/workspace
+```
+
+### Metadata
+
+```sh
+tag=metadata
+
+external_dir=${workspace_dir}/${tag}/${BATCH_ID}
+
+local_dir=${repo_working_dir}/${tag}/${BATCH_ID}
+
+mkdir -p ${local_dir}
+
+rsync -arzv --include="*/" --include="*.csv" --include="*.txt" --exclude "*" ${external_dir}/ ${local_dir}/
+```
+
+### Audits
+
+```sh
+tag=audit
+
+external_dir=${workspace_dir}/${tag}/${BATCH_ID}
+
+local_dir=${repo_working_dir}/${tag}/${BATCH_ID}
+
+mkdir -p ${local_dir}
+
+rsync -arzv --include="*/" --include="*.csv" --include="*.txt" --exclude "*" ${external_dir}/ ${local_dir}/
+```
+
+### Level 3,4a,4b
 
 The Level 3,4a,4b data were created using `cytominer`, by following the instructions `../0.pilot-run-workflows/generate_profiles.sh`.
 
 Copy these files to `../../backend`
 
 ```sh
-BATCH_ID=NCP_STEM_1
-```
-
-```sh
-cd ~/work/projects/2019_05_28_Neuronal_Cell_Painting/workspace/
+cd ${workspace_dir}
 
 mkdir -p backend && cd backend && mkdir -p ${BATCH_ID} && cd ${BATCH_ID}
 
@@ -56,9 +92,9 @@ aws s3 sync --include "*.csv" --exclude "*.sqlite" s3://imaging-platform/project
 Store this location as a variable
 
 ```sh
-cd ~/work/projects/2019_05_28_Neuronal_Cell_Painting/workspace/software/neuronal-cell-painting/1.main-run-workflows/
+cd ${repo_working_dir}
 
-external_backend_dir=../../../backend/${BATCH_ID}
+external_backend_dir=${workspace_dir}/backend/${BATCH_ID}
 ```
 
 We read these files in and save them out as `.gz` files after trimming the significant digits using `csv2gz.py`.
@@ -84,7 +120,7 @@ find ${external_backend_dir} -type f -name "*.csv" -exec ./csv2gz.py {} \;
 Sync them to this repo
 
 ```sh
-mkdir -p profiles/${BATCH_ID}/
-rsync -arzv --include="*/" --include="*.gz" --exclude "*" ${external_backend_dir}/ profiles/${BATCH_ID}/
+mkdir -p 
+rsync -arzv --include="*/" --include="*.gz" --exclude "*" ${external_backend_dir}/ ${repo_working_dir}/profiles/${BATCH_ID}/
 ```
 
