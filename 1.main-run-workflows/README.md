@@ -84,6 +84,7 @@ find ${external_backend_dir} -type f -name "*.csv" -exec ./csv2gz.py {} \;
 Sync them to this repo
 
 ```sh
-rsync -arzv --include="*/" --include="*.gz" --exclude "*" ${external_backend_dir}/ profiles/
+mkdir -p profiles/${BATCH_ID}/
+rsync -arzv --include="*/" --include="*.gz" --exclude "*" ${external_backend_dir}/ profiles/${BATCH_ID}/
 ```
 
