@@ -177,10 +177,10 @@ parallel \
   --results ../../log/${BATCH_ID}/normalize \
   --files \
   --keep-order \
-  ./normalize.R \
+  /home/ubuntu/R/library/cytotools/scripts/cytotools_normalize \
   --batch_id ${BATCH_ID} \
-  --plate_id {1} \
-  --subset \"Metadata_Well != \'\'\'dummy\'\'\'\" :::: ${PLATES}
+  --workspace_dir ../../ \
+  --plate_id {1} :::: ${PLATES}
 
 ############################
 # Step 5 - Variable Selection
@@ -224,7 +224,7 @@ mkdir -p ../../parameters/${BATCH_ID}/sample/
   --operations variance_threshold
 
 # Step 5.3 - Remove features known to be noisy
-SAMPLE_PLATE_ID='cmqtlpl1.5-31-2019-mt'
+SAMPLE_PLATE_ID='BR_NCP_STEM_1'
 echo "variable" > ../../parameters/${BATCH_ID}/variable_selection/manual.txt
 
 head -1 \
@@ -251,14 +251,13 @@ parallel \
 ############################
 
 # If jumping in directly to this step, define BATCH_ID and PLATES
-# BATCH_ID=2019_06_10_Batch3
-# BATCH_ID=2019_08_15_Batch4 
-# BATCH_ID=2019_09_06_Batch5
+# PROJECT_NAME=2019_05_28_Neuronal_Cell_Painting
+# BATCH_ID=NCP_STEM_1
 # PLATES=$(readlink -f ~/efs/${PROJECT_NAME}/workspace/scratch/${BATCH_ID}/plates_to_process.txt)
 
 cd ~/efs/${PROJECT_NAME}/workspace/software/cytominer_scripts
 
-mkdir -p ~/ebs_tmp/2018_06_05_cmQTL/workspace/backend/${BATCH_ID}
+mkdir -p ~/ebs_tmp/${PROJECT_NAME}/workspace/backend/${BATCH_ID}
 
 parallel \
   --no-run-if-empty \
@@ -266,8 +265,8 @@ parallel \
   aws s3 sync \
   --exclude '"*"' \
   --include '"*.sqlite"' \
-  s3://imaging-platform/projects/2018_06_05_cmQTL/workspace/backend/${BATCH_ID}/{1}/ \
-  ~/ebs_tmp/2018_06_05_cmQTL/workspace/backend/${BATCH_ID}/{1}/ \
+  s3://imaging-platform/projects/${PROJECT_NAME}/workspace/backend/${BATCH_ID}/{1}/ \
+  ~/ebs_tmp/${PROJECT_NAME}/workspace/backend/${BATCH_ID}/{1}/ \
   :::: ${PLATES}
 
 # cell counts
@@ -280,7 +279,7 @@ parallel \
   --keep-order \
   --eta \
   ./stats.R  \
-  ~/ebs_tmp/2018_06_05_cmQTL/workspace/backend/${BATCH_ID}/{1}/{1}.sqlite \
+  ~/ebs_tmp/${PROJECT_NAME}/workspace/backend/${BATCH_ID}/{1}/{1}.sqlite \
   -o ../../backend/${BATCH_ID}/{1}/{1}_count.csv \
   :::: ${PLATES}
 
@@ -295,7 +294,7 @@ parallel \
 parallel \
   --no-run-if-empty \
   --eta \
-  rm ~/ebs_tmp/2018_06_05_cmQTL/workspace/backend/${BATCH_ID}/{1}/{1}.sqlite \
+  rm ~/ebs_tmp/${PROJECT_NAME}/workspace/backend/${BATCH_ID}/{1}/{1}.sqlite \
   :::: ${PLATES}
 
 ############################
