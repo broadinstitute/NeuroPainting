@@ -95,7 +95,7 @@ cd ${repo_working_dir}
 external_backend_dir=${workspace_dir}/backend/${BATCH_ID}
 ```
 
-We read these files in and save them out as `.gz` files after trimming the significant digits using `csv2gz.py`.
+Read these files in and save them out as `.gz` files after trimming the significant digits using `csv2gz.py`.
 
 First optionally remove the existing `.gz` files
 
@@ -118,7 +118,7 @@ find ${external_backend_dir} -type f -name "*.csv" -exec ./csv2gz.py {} \;
 Sync them to this repo
 
 ```sh
-mkdir -p
+mkdir -p  ${repo_working_dir}/profiles/${BATCH_ID}/
 rsync -arzv --include="*/" --include="*.gz" --exclude "*" ${external_backend_dir}/ ${repo_working_dir}/profiles/${BATCH_ID}/
 ```
 
