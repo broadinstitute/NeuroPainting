@@ -37,7 +37,7 @@ mkdir -p ~/efs/${PROJECT_NAME}/workspace/
 cd ~/efs/${PROJECT_NAME}/workspace/
 mkdir -p log/${BATCH_ID}
 
-# the scripts were run verbatim for these  additional batches with appropriate modifications to 
+# the scripts were run verbatim for these  additional batches with appropriate modifications to
 # SAMPLE_PLATE_ID and contents of $PLATES
 #BATCH_ID=NCP_PILOT_3
 #SAMPLE_FULL_PLATE_NAME=BR_NCP_PILOT_3
@@ -63,7 +63,7 @@ git clone git@github.com:broadinstitute/cytominer_scripts.git
 git clone git@github.com:CellProfiler/Distributed-CellProfiler.git
 
 # Copy config_files/config.yml to cellpainting_scripts/ (overwrite the existing file)
-      
+
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/configure-tools-to-process-images.html#update-some-packages
 # https://cytomining.github.io/profiling-handbook/configure-tools-to-process-images.html#setup-distributed-cellprofiler
@@ -75,7 +75,7 @@ PIPELINE_SET=cellpainting_ipsc_20x_phenix_with_bf_bin1_cp3/
 
 # NOTE:The actual version of the pipeline run was this:
 # https://github.com/broadinstitute/imaging-platform-pipelines/pull/17/commits/1c3ed24cffc042195e01b6bd791353a2f75fc450
-# which differs from the master branch only in the way the outputs are stored. 
+# which differs from the master branch only in the way the outputs are stored.
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#prepare-images
@@ -89,32 +89,32 @@ echo "BR_NCP_STEM_1"|tr " " "\n" > ${PLATES}
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-pipelines-and-images.html#create-loaddata-csvs
-# Note: 
+# Note:
 # - the cellpainting_scripts/config.ini file had not been set up correctly, and pe2loaddata got stuck
 # so I did it by hand (i.e. `parallel --dry-run` and then run each command)
-# - pe2loaddata has been recently updated but there are no instructions for install or use. 
-# I thus checked out an old commit 
+# - pe2loaddata has been recently updated but there are no instructions for install or use.
+# I thus checked out an old commit
 # cd ~/efs/2019_05_28_Neuronal_Cell_Painting/workspace/software/pe2loaddata
 # git checkout 62b5e35647d2b6e7fafab4ae4b189b4f2cfecdad
 
 # Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/setup-jobs.html#illumination-correction
 # https://cytomining.github.io/profiling-handbook/setup-jobs.html#analysis
-# but change the docker image for both 
+# but change the docker image for both
 # `--cp_docker_image cellprofiler/cellprofiler:3.1.8`
 # This errored but the config files got created without a hitch. See https://github.com/broadinstitute/cmQTL/issues/14#issuecomment-505551405
 
 # Copy the `dcp_config_files` directory to `cellpainting_scripts`
 cp ../neuronal-cell-painting/0.pilot-run-workflows/dcp_config_files/* ../cellpainting_scripts/dcp_config_files/
 
-# Follow these steps verbatim 
+# Follow these steps verbatim
 # https://cytomining.github.io/profiling-handbook/run-jobs.html#run-illum-dcp
 # https://cytomining.github.io/profiling-handbook/run-jobs.html#dcp
 # https://cytomining.github.io/profiling-handbook/create-profiles.html#create-database-backend
 
 
 ############################
-# Step 2B - Aggregate for plates that don't have standard compartments 
+# Step 2B - Aggregate for plates that don't have standard compartments
 ############################
 
 # First install cytomining/cytotools
@@ -199,9 +199,18 @@ parallel \
 # Note - Variable selection uses both normalized and unnormalized data
 mkdir -p ../../parameters/${BATCH_ID}/sample/
 
-# In the sampling steps below, we specify replicates = 1 because there is only 1 
+# In the sampling steps below, we specify replicates = 1 because there is only 1
 # replicate plate per platemap. Currently, sampling replicates within a plate is
 # not supported in cytominer_scripts
+
+# For neurons, first modify preselect.R so that compartments are handled correctly
+
+# Replace occurences of
+# stringr::str_subset("^Nuclei_|^Cells_|^Cytoplasm_")
+# with
+# stringr::str_subset("^Metadata_", negate = TRUE)
+
+# This works for non-neurons too
 
 # Step 5.0 - Sample normalized and unnormalized data
 # Normalized
@@ -220,6 +229,7 @@ mkdir -p ../../parameters/${BATCH_ID}/sample/
 
 # Using the sampled feather files, perform a series of three variable selection steps
 # Step 5.1 - Remove variables that have high correlations with other variables
+
 ./preselect.R \
   --batch_id ${BATCH_ID} \
   --input ../../parameters/${BATCH_ID}/sample/${BATCH_ID}_normalized_sample.feather \
@@ -243,6 +253,20 @@ head -1 \
 
 # Step 5.4 - Apply the variable selection steps to the profiles
 # Note - This creates the _normalized_variable_selected.csv files in `backend`
+
+# For neurons, first modify select.R so that compartments are handled correctly
+
+# Edit the code so that variables is created after metadata
+#
+# metadata <-
+#   colnames(df) %>%
+#   stringr::str_subset("^Metadata_")
+#
+# variables <-
+#   setdiff(colnames(df), metadata)
+
+# This works for non-neurons too
+
 parallel \
   --no-run-if-empty \
   --eta \
@@ -254,6 +278,11 @@ parallel \
   --batch_id ${BATCH_ID} \
   --plate_id {1} \
   --filters variance_threshold,correlation_threshold,manual :::: ${PLATES}
+
+
+
+
+
 
 ############################
 # Compute cell counts
@@ -333,7 +362,7 @@ csvcut -c Plate_Map_Name \
   ../../metadata/${BATCH_ID}/barcode_platemap.csv | \
   tail -n +2|sort|uniq > \
   ${PLATE_MAPS}
-  
+
 mkdir -p ../../audit/${BATCH_ID}/
 
 # for NCP_STEM_1
@@ -356,12 +385,12 @@ parallel \
   -o ../../audit/${BATCH_ID}/{1}_audit.csv \
   -l ../../audit/${BATCH_ID}/{1}_audit_detailed.csv \
   -p ${replicate_grouping_variables} :::: ${PLATE_MAPS}
-  
+
 ############################
 # Step 6 - Convert to other formats
 ############################
 
-# Follow only the first part of this step 
+# Follow only the first part of this step
 # https://cytomining.github.io/profiling-handbook/create-profiles.html#convert-to-other-formats
 # i.e.:
 
@@ -375,12 +404,12 @@ parallel \
   ./csv2gct.R \
   ../../backend/${BATCH_ID}/{1}/{1}_{2}.csv \
   -o ../../backend/${BATCH_ID}/{1}/{1}_{2}.gct :::: ${PLATES} ::: augmented normalized normalized_variable_selected
-  
+
 ############################
 # Step 7 - Upload data
 ############################
 
-# Follow this step nearly verbatim 
+# Follow this step nearly verbatim
 # https://cytomining.github.io/profiling-handbook/create-profiles.html#upload-data
 
 parallel \
