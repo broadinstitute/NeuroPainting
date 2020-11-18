@@ -134,6 +134,8 @@ cp collate.R collate_neurons.R
 # aggregate_cmd <- paste("./aggregate.R", cache_backend_file, "-o", cache_aggregated_file)
 # to
 # aggregate_cmd <- paste("/home/ubuntu/R/library/cytotools/scripts/cytotools_aggregate", cache_backend_file, "-c", "CellBodies,CellBodiesPlusNeurites,Cytoplasm,Nuclei,Neurites", "-t", "Image", "-o", cache_aggregated_file)
+# or, for neurons with antibody staining, also add PrelimNuclei
+# aggregate_cmd <- paste("/home/ubuntu/R/library/cytotools/scripts/cytotools_aggregate", cache_backend_file, "-c", "CellBodies,CellBodiesPlusNeurites,Cytoplasm,Nuclei,Neurites,PrelimNuclei", "-t", "Image", "-o", cache_aggregated_file)
 # and then run the collate step, but replace `./collate.R` with `./collate_neurons.R`
 
 ############################
@@ -173,6 +175,9 @@ parallel \
 
 # for neurons
 compartments=CellBodies,CellBodiesPlusNeurites,Cytoplasm,Nuclei,Neurites
+
+# for neurons with antibody staining
+compartments=CellBodies,CellBodiesPlusNeurites,Cytoplasm,Nuclei,Neurites,PrelimNuclei
 
 # for regular cells (need to verify)
 compartments=cells,cytoplasm,nuclei
@@ -243,7 +248,8 @@ mkdir -p ../../parameters/${BATCH_ID}/sample/
 
 # Step 5.3 - Remove features known to be noisy
 #SAMPLE_PLATE_ID='BR_NCP_STEM_1'
-SAMPLE_PLATE_ID='BR_NCP_PILOT_3'
+#SAMPLE_PLATE_ID='BR_NCP_PILOT_3'
+SAMPLE_PLATE_ID='MAtt_ICC_test'
 echo "variable" > ../../parameters/${BATCH_ID}/variable_selection/manual.txt
 
 head -1 \
@@ -278,11 +284,6 @@ parallel \
   --batch_id ${BATCH_ID} \
   --plate_id {1} \
   --filters variance_threshold,correlation_threshold,manual :::: ${PLATES}
-
-
-
-
-
 
 ############################
 # Compute cell counts
@@ -370,6 +371,9 @@ replicate_grouping_variables=Metadata_Plate_Map_Name,Metadata_line_ID,Metadata_p
 
 # for NCP_PILOT_3
 replicate_grouping_variables=Metadata_Plate_Map_Name,Metadata_line_condition,Metadata_compound_ID,Metadata_plating_density
+
+# for NCP_PILOT_3B
+replicate_grouping_variables=Metadata_Plate_Map_Name,Metadata_line_condition,Metadata_plating_density
 
 parallel \
   --no-run-if-empty \
