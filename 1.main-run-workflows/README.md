@@ -17,13 +17,7 @@ The single cell SQLite files are available on S3:
 |Metadata_Plate|
 |:-------------|
 | [BR_NCP_STEM_1](https://imaging-platform.s3.us-east-1.amazonaws.com/projects/2019_05_28_Neuronal_Cell_Painting/workspace/backend/NCP_STEM_1/BR_NCP_STEM_1/BR_NCP_STEM_1.sqlite) |
-
-
-These are the counts of cell lines across the full dataset
-
-|Metadata_Plate        |  n|
-|:---------------------|--:|
-|BR_NCP_STEM_1 | 48|
+| [BR_NCP_PILOT_3](https://imaging-platform.s3.us-east-1.amazonaws.com/projects/2019_05_28_Neuronal_Cell_Painting/workspace/backend/NCP_PILOT_3/BR_NCP_PILOT_3/BR_NCP_PILOT_3.sqlite) |
 
 
 These are the details of batches - when they were imaged and the plate IDs of the constituent plates (a.k.a. `Metadata_Plate`)
@@ -31,6 +25,7 @@ These are the details of batches - when they were imaged and the plate IDs of th
 | Fixation date | Batch ID | Metadata_Plate |
 |:------------|----------| :-------|
 | 2020-09-24 | NCP_STEM_1 | BR_NCP_STEM_1 |
+| 2020-XX-XX | NCP_PILOT_3 | BR_NCP_PILOT_3 |
 
 
 ## Instructions for copying data to this repo
@@ -39,6 +34,8 @@ Set variables
 
 ```sh
 BATCH_ID=NCP_STEM_1
+# OR
+BATCH_ID=NCP_PILOT_3
 
 repo_working_dir=~/work/projects/2019_05_28_Neuronal_Cell_Painting/workspace/software/neuronal-cell-painting/1.main-run-workflows
 
