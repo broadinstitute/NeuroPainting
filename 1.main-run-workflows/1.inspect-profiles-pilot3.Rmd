@@ -70,11 +70,12 @@ profiles %<>%
            replace_na(Metadata_compound_ID, "Untreated"))
 
 profiles %<>% 
-  mutate(Metadata_replicate = 
+  mutate(Metadata_group = 
            str_c(Metadata_line_condition, 
-                 Metadata_compound_ID, 
-                 sep = "_")) 
-  
+                 Metadata_plating_density, 
+                 sep = "_")) %>%
+  mutate(Metadata_replicate = Metadata_compound_ID)  
+    
 variables <- str_subset(names(profiles), "^Metadata_", negate = TRUE)
 
 metadata <- str_subset(names(profiles), "^Metadata_", negate = FALSE)
