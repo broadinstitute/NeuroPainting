@@ -58,14 +58,43 @@ plate_id <- "BR_NCP_PILOT_3"
 profiles <- 
   read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, "_normalized_variable_selected.csv.gz")), 
            progress = FALSE)
+
+
 ```
 
+### Save profiles for grit
 
-```{r message=TRUE}
+```{r}
+profiles %<>% 
+  mutate(Metadata_compound_ID = 
+           replace_na(Metadata_compound_ID, "Untreated"))
 
+profiles %<>% 
+  mutate(Metadata_replicate = 
+           str_c(Metadata_line_condition, 
+                 Metadata_compound_ID, 
+                 sep = "_")) 
+  
 variables <- str_subset(names(profiles), "^Metadata_", negate = TRUE)
 
+metadata <- str_subset(names(profiles), "^Metadata_", negate = FALSE)
+
+profiles <- 
+  bind_cols(
+    select(profiles, all_of(metadata)), 
+    select(profiles, all_of(variables))
+    )
+
+profiles %>%
+  write_csv(file.path(
+    "profiles",
+    batch_id,
+    plate_id,
+    paste0(plate_id, "_normalized_variable_selected.csv.gz")
+  ))
+
 ```
+
 
 Report the size of feature spaces
 
@@ -122,13 +151,11 @@ replicates_per_line <-
 replicates_per_line %>%
   show_table
 ```
-
 ### Audits
 
 What is the median replicate correlation for each cell line? Do this across all types of profiles
 
 ```{r message=FALSE}
-
 audit_detailed_all <- tibble()
 
 audit_all <- tibble()
@@ -158,7 +185,10 @@ for (profile_type_i in c("")) {
               audit %>% mutate(profile_type = profile_type_i))
   
 }
+```
 
+
+```{r message=FALSE}
 p <-
   ggplot(audit_detailed_all,
          aes(correlation)) +
@@ -180,6 +210,28 @@ ggsave(file.path("figures",
        p, width = 8, height = 8)
   
 ```
+```{r}
+p <-
+  ggplot(audit_detailed_all,
+         aes(correlation, fill = Metadata_compound_ID)) +
+  geom_histogram(binwidth = .03) +
+  geom_vline(aes(xintercept = null_threshold), audit_all) +
+  xlab("Median pearson correlation between replicates") +
+  facet_grid(Metadata_line_condition ~ Metadata_plating_density) +
+  ggtitle(
+    "Distribution of replicate correlation across all cell lines",
+    subtitle = "Vertical line indicates 95th percentile of null distribution."
+  )
+
+print(p)
+
+dir.create("figures", showWarnings = FALSE)
+
+ggsave(file.path("figures", 
+                 glue("{plate_id}_replicate_correlation_faceted.png")), 
+       p, width = 8, height = 8)
+```
+
 
 ## Is cell plating density correlated with the order of plating a cell line?
 
@@ -327,7 +379,7 @@ create_augmented_profiles <- function(profiles, profile_type_i) {
     select(matches("^Metadata_"), everything())
   
   augmented_profiles_i %>%
-   write_csv(file.path("profiles", glue("{plate_id}{profile_type_i}_normalized_variable_selected_augmented.csv.gz")))
+   write_csv(file.path("profiles", batch_id, plate_id,  glue("{plate_id}{profile_type_i}_normalized_variable_selected_augmented.csv.gz")))
   
   augmented_profiles_i
 }
@@ -341,8 +393,8 @@ augmented_profiles <- create_augmented_profiles(profiles, "")
 cd ../../cytominer_scripts
 
 Rscript csv2gct.R \
-  ../../backend/2019_06_10_Batch3/cmqtlpl1.5-31-2019-mt/cmqtlpl1.5-31-2019-mt_normalized_variable_selected_augmented.csv \
-  -o ../../backend/2019_06_10_Batch3/cmqtlpl1.5-31-2019-mt/cmqtlpl1.5-31-2019-mt_normalized_variable_selected_augmented.gct
+  ../neuronal-cell-painting/1.main-run-workflows/profiles/NCP_PILOT_3/BR_NCP_PILOT_3/BR_NCP_PILOT_3_normalized_variable_selected_augmented.csv.gz \
+  -o ../neuronal-cell-painting/1.main-run-workflows/profiles/NCP_PILOT_3/BR_NCP_PILOT_3/BR_NCP_PILOT_3_normalized_variable_selected_augmented.gct
 
 cd -
 ```

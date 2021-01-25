@@ -21,11 +21,11 @@ plot_plate <- function(plate,
   plate %<>%
     rowwise() %>%
     mutate(row_id =
-             str_sub(!!!well_position, 1, 1)[[1]]) %>%
+             str_sub(!!well_position, 1, 1)[[1]]) %>%
     mutate(row_id_int =
              str_locate(paste0(LETTERS, collapse = ""), row_id)[[1]]) %>%
     mutate(col_id =
-             as.integer(str_sub(!!!well_position, 2, 3)))
+             as.integer(str_sub(!!well_position, 2, 3)))
   
   p <- 
     ggplot(plate, aes(as.factor(col_id), fct_rev(as.factor(row_id)), fill = !!variable)) +
