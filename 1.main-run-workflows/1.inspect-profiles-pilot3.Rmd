@@ -422,6 +422,73 @@ plot_replicate_correlations_platemap <- function(augmented_profiles_i, profile_t
 
 plot_replicate_correlations_platemap(augmented_profiles, "")
 ```
+## Compute similarity to untreated
+
+
+```{r}
+source("utils.R")
+
+well_level_similarity <- similarity(profiles)
+
+well_level_similarity %<>% 
+  filter(Metadata_compound_ID1 == "Untreated" & Metadata_compound_ID2 != "Untreated") %>%
+  filter(Metadata_plating_density1 == Metadata_plating_density2) %>%
+  filter(Metadata_line_condition1 == Metadata_line_condition2)
+```
+
+
+Each well is compared with all the controls for that condition-density (n=32 in most cases)
+
+```{r}
+well_level_similarity %>% 
+  group_by(Metadata_plating_density2, 
+           Metadata_line_condition2, 
+           Metadata_compound_ID2, 
+           Metadata_Well2) %>% 
+  tally() %>% 
+  ungroup() %>%
+  sample_n(10) %>%
+  show_table()
+```
+
+
+```{r}
+reps <-
+  well_level_similarity %>% 
+  distinct(Metadata_plating_density2, 
+           Metadata_line_condition2, 
+           Metadata_compound_ID2,
+           Metadata_Well2) %>%
+  group_by(Metadata_plating_density2, 
+           Metadata_line_condition2, 
+           Metadata_compound_ID2) %>%
+  arrange(Metadata_Well2) %>%
+  mutate(Metadata_replicate_number2 = seq_along(Metadata_Well2)) %>%
+  arrange(Metadata_plating_density2, 
+           Metadata_line_condition2, 
+           Metadata_compound_ID2) %>%
+  ungroup() 
+
+well_level_similarity_with_reps <-
+  well_level_similarity %>% 
+  inner_join(reps)
+  
+```
+
+
+```{r}
+p <- 
+  well_level_similarity_with_reps %>%
+  ggplot(aes( as.factor(Metadata_replicate_number2), correlation)) + 
+  geom_violin() + 
+  facet_grid(Metadata_plating_density2~Metadata_line_condition2~Metadata_compound_ID2) +
+  ggtitle("Distributions of Pearson similarity to untreated wells", 
+          subtitle = "Each condition-density combination (i.e. each row) has a unique set of ~32 untreated wells.")
+
+print(p)
+
+ggsave("figures/BR_NCP_PILOT_3_similarities_to_untreated.png", width = 8, height = 5)
+```
 
 
 ## Does cell plating density drive similarities?
