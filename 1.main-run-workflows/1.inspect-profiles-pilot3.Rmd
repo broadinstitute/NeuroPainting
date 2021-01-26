@@ -513,7 +513,7 @@ well_level_similarity_control_deletion <-
 
 well_level_similarity_control_deletion %>%
   filter(Metadata_pairtype != "other") %>%
-  ggplot(aes(correlation, color = Metadata_pairtype)) + geom_density() + facet_wrap(~Metadata_plating_density1) +
+  ggplot(aes(correlation, fill = Metadata_pairtype)) + geom_histogram(alpha = 0.5, position="identity") + facet_wrap(~Metadata_plating_density1) +
   ggtitle("Comparing similarites between control and deletion lines at baseline, across doses",
           "We'd like the control_deletion curve to be shifted to the left of the other two")
 ```
