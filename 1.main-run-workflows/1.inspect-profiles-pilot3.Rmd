@@ -58,14 +58,44 @@ plate_id <- "BR_NCP_PILOT_3"
 profiles <- 
   read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, "_normalized_variable_selected.csv.gz")), 
            progress = FALSE)
+
+
 ```
 
+### Save profiles for grit
 
-```{r message=TRUE}
+```{r}
+profiles %<>% 
+  mutate(Metadata_compound_ID = 
+           replace_na(Metadata_compound_ID, "Untreated"))
 
+profiles %<>% 
+  mutate(Metadata_group = 
+           str_c(Metadata_line_condition, 
+                 Metadata_plating_density, 
+                 sep = "_")) %>%
+  mutate(Metadata_replicate = Metadata_compound_ID)  
+    
 variables <- str_subset(names(profiles), "^Metadata_", negate = TRUE)
 
+metadata <- str_subset(names(profiles), "^Metadata_", negate = FALSE)
+
+profiles <- 
+  bind_cols(
+    select(profiles, all_of(metadata)), 
+    select(profiles, all_of(variables))
+    )
+
+profiles %>%
+  write_csv(file.path(
+    "profiles",
+    batch_id,
+    plate_id,
+    paste0(plate_id, "_normalized_variable_selected.csv.gz")
+  ))
+
 ```
+
 
 Report the size of feature spaces
 
@@ -122,13 +152,11 @@ replicates_per_line <-
 replicates_per_line %>%
   show_table
 ```
-
 ### Audits
 
 What is the median replicate correlation for each cell line? Do this across all types of profiles
 
 ```{r message=FALSE}
-
 audit_detailed_all <- tibble()
 
 audit_all <- tibble()
@@ -158,7 +186,10 @@ for (profile_type_i in c("")) {
               audit %>% mutate(profile_type = profile_type_i))
   
 }
+```
 
+
+```{r message=FALSE}
 p <-
   ggplot(audit_detailed_all,
          aes(correlation)) +
@@ -180,6 +211,28 @@ ggsave(file.path("figures",
        p, width = 8, height = 8)
   
 ```
+```{r}
+p <-
+  ggplot(audit_detailed_all,
+         aes(correlation, fill = Metadata_compound_ID)) +
+  geom_histogram(binwidth = .03) +
+  geom_vline(aes(xintercept = null_threshold), audit_all) +
+  xlab("Median pearson correlation between replicates") +
+  facet_grid(Metadata_line_condition ~ Metadata_plating_density) +
+  ggtitle(
+    "Distribution of replicate correlation across all cell lines",
+    subtitle = "Vertical line indicates 95th percentile of null distribution."
+  )
+
+print(p)
+
+dir.create("figures", showWarnings = FALSE)
+
+ggsave(file.path("figures", 
+                 glue("{plate_id}_replicate_correlation_faceted.png")), 
+       p, width = 8, height = 8)
+```
+
 
 ## Is cell plating density correlated with the order of plating a cell line?
 
@@ -327,7 +380,7 @@ create_augmented_profiles <- function(profiles, profile_type_i) {
     select(matches("^Metadata_"), everything())
   
   augmented_profiles_i %>%
-   write_csv(file.path("profiles", glue("{plate_id}{profile_type_i}_normalized_variable_selected_augmented.csv.gz")))
+   write_csv(file.path("profiles", batch_id, plate_id,  glue("{plate_id}{profile_type_i}_normalized_variable_selected_augmented.csv.gz")))
   
   augmented_profiles_i
 }
@@ -341,8 +394,8 @@ augmented_profiles <- create_augmented_profiles(profiles, "")
 cd ../../cytominer_scripts
 
 Rscript csv2gct.R \
-  ../../backend/2019_06_10_Batch3/cmqtlpl1.5-31-2019-mt/cmqtlpl1.5-31-2019-mt_normalized_variable_selected_augmented.csv \
-  -o ../../backend/2019_06_10_Batch3/cmqtlpl1.5-31-2019-mt/cmqtlpl1.5-31-2019-mt_normalized_variable_selected_augmented.gct
+  ../neuronal-cell-painting/1.main-run-workflows/profiles/NCP_PILOT_3/BR_NCP_PILOT_3/BR_NCP_PILOT_3_normalized_variable_selected_augmented.csv.gz \
+  -o ../neuronal-cell-painting/1.main-run-workflows/profiles/NCP_PILOT_3/BR_NCP_PILOT_3/BR_NCP_PILOT_3_normalized_variable_selected_augmented.gct
 
 cd -
 ```
@@ -368,6 +421,101 @@ plot_replicate_correlations_platemap <- function(augmented_profiles_i, profile_t
 }
 
 plot_replicate_correlations_platemap(augmented_profiles, "")
+```
+## Compute similarity to untreated
+
+
+```{r}
+source("utils.R")
+
+well_level_similarity <- similarity(profiles)
+```
+
+
+```{r}
+well_level_similarity_to_untrt <-
+  well_level_similarity %>% 
+  filter(Metadata_compound_ID1 == "Untreated" & Metadata_compound_ID2 != "Untreated") %>%
+  filter(Metadata_plating_density1 == Metadata_plating_density2) %>%
+  filter(Metadata_line_condition1 == Metadata_line_condition2)
+```
+
+Each well is compared with all the controls for that condition-density (n=32 in most cases)
+
+```{r}
+well_level_similarity_to_untrt %>% 
+  group_by(Metadata_plating_density2, 
+           Metadata_line_condition2, 
+           Metadata_compound_ID2, 
+           Metadata_Well2) %>% 
+  tally() %>% 
+  ungroup() %>%
+  sample_n(10) %>%
+  show_table()
+```
+
+
+```{r}
+reps <-
+  well_level_similarity_to_untrt %>% 
+  distinct(Metadata_plating_density2, 
+           Metadata_line_condition2, 
+           Metadata_compound_ID2,
+           Metadata_Well2) %>%
+  group_by(Metadata_plating_density2, 
+           Metadata_line_condition2, 
+           Metadata_compound_ID2) %>%
+  arrange(Metadata_Well2) %>%
+  mutate(Metadata_replicate_number2 = seq_along(Metadata_Well2)) %>%
+  arrange(Metadata_plating_density2, 
+           Metadata_line_condition2, 
+           Metadata_compound_ID2) %>%
+  ungroup() 
+
+well_level_similarity_to_untrt_with_reps <-
+  well_level_similarity_to_untrt %>% 
+  inner_join(reps)
+  
+```
+
+
+```{r}
+p <- 
+  well_level_similarity_to_untrt_with_reps %>%
+  ggplot(aes( as.factor(Metadata_replicate_number2), correlation)) + 
+  geom_violin() + 
+  facet_grid(Metadata_plating_density2~Metadata_line_condition2~Metadata_compound_ID2) +
+  ggtitle("Distributions of Pearson similarity to untreated wells", 
+          subtitle = "Each condition-density combination (i.e. each row) has a unique set of ~32 untreated wells.")
+
+print(p)
+
+ggsave("figures/BR_NCP_PILOT_3_similarities_to_untreated.png", width = 8, height = 5)
+```
+
+## Compute differences between control and deletion for untreated wells
+
+```{r}
+well_level_similarity_control_deletion <-
+  well_level_similarity %>%
+  filter(id1 != id2) %>%
+  filter(Metadata_compound_ID1 == "Untreated" & Metadata_compound_ID2 == "Untreated") %>%
+  filter(Metadata_plating_density1 == Metadata_plating_density2) %>%
+  filter(Metadata_plating_density1 == Metadata_plating_density2) %>%
+  mutate(Metadata_pairtype = 
+           case_when(
+             Metadata_line_condition1 == "control" & Metadata_line_condition2 == "deletion" ~ "control_deletion",
+             Metadata_line_condition1 == "control" & Metadata_line_condition2 == "control" ~ "control_control",
+             Metadata_line_condition1 == "deletion" & Metadata_line_condition2 == "deletion" ~ "deletion_deletion",
+             TRUE ~ "other"
+           )
+         )
+
+well_level_similarity_control_deletion %>%
+  filter(Metadata_pairtype != "other") %>%
+  ggplot(aes(correlation, fill = Metadata_pairtype)) + geom_histogram(alpha = 0.5, position="identity") + facet_wrap(~Metadata_plating_density1) +
+  ggtitle("Comparing similarites between control and deletion lines at baseline, across doses",
+          "We'd like the control_deletion curve to be shifted to the left of the other two")
 ```
 
 
