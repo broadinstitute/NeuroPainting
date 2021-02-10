@@ -51,36 +51,41 @@ for (channel in channels) {
 datasets <- 
   tribble(
     ~batch, ~plate,
-    "NCP_STEM_1", "BR_NCP_STEM_1"
+    "NCP_STEM_1", "BR_NCP_STEM_1",
+    "NCP_PROGENITORS_1", "BR_NCP_PROGENITORS_1"
   )
 
-metadata <- 
-  map2_df(
-    datasets$batch,
-    datasets$plate,
-    function(batch, plate) {
-      read_csv(
-        file.path("profiles", glue("{batch}/{plate}/{plate}_augmented.csv.gz")),
-        col_types = cols_only(
-          Metadata_Plate = "c",
-          Metadata_Well = "c",
-          Metadata_line_ID = "c",
-          Metadata_Assay_Plate_Barcode = "c",
-          Metadata_Plate_Map_Name = "c",
-          Metadata_well_position = "c",
-          Metadata_plating_density = "c"
-        )
-      ) %>%
-        distinct()
-    }
-  )
+metadata <-
+  map2_df(datasets$batch,
+          datasets$plate,
+          function(batch, plate) {
+            read_tsv(
+              file.path("metadata", glue("{batch}/platemap/{plate}.txt")),
+              col_types = cols_only(
+                plate_map_name = "c",
+                well_position = "c",
+                line_ID = "c",
+                line_condition = "c",
+                line_source = "c",
+                plating_density = "i"
+              )
+            ) %>%
+              distinct()
+          })
 
+metadata %<>%
+  rename(Metadata_Plate = plate_map_name, 
+         Metadata_Well = well_position,
+         Metadata_line_ID = line_ID,
+         Metadata_line_condition = line_condition,
+         Metadata_line_source = line_source,
+         Metadata_plating_density = plating_density)
 ```
 
 ## Report plating densities
 
 ```{r}
-metadata %>% group_by(Metadata_Plate_Map_Name, Metadata_plating_density) %>% tally()
+metadata %>% group_by(Metadata_Plate, Metadata_plating_density) %>% tally()
 ```
 
 
