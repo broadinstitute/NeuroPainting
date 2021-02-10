@@ -1,9 +1,0 @@
-Metadata_Plate_Map_Name,Metadata_line_condition,Metadata_plating_density,correlation
-MAtt_ICC_test,control,2500,0.012185827104725218
-MAtt_ICC_test,control,5000,0.17073153012248068
-MAtt_ICC_test,control,7500,0.20693042731464828
-MAtt_ICC_test,control,10000,0.018338413182622085
-MAtt_ICC_test,deletion,2500,0.07490702207198632
-MAtt_ICC_test,deletion,5000,0.7142109805771129
-MAtt_ICC_test,deletion,7500,0.8063509048771706
-MAtt_ICC_test,deletion,10000,0.87874033052465
