@@ -52,7 +52,9 @@ datasets <-
   tribble(
     ~batch, ~plate,
     "NCP_STEM_1", "BR_NCP_STEM_1",
-    "NCP_PROGENITORS_1", "BR_NCP_PROGENITORS_1"
+    "NCP_PROGENITORS_1", "BR_NCP_PROGENITORS_1",
+    "NCP_PILOT_3", "BR_NCP_PILOT_3",
+    "NCP_PILOT_3B", "MAtt_ICC_test"
   )
 
 metadata <-
@@ -61,25 +63,15 @@ metadata <-
           function(batch, plate) {
             read_tsv(
               file.path("metadata", glue("{batch}/platemap/{plate}.txt")),
-              col_types = cols_only(
-                plate_map_name = "c",
-                well_position = "c",
-                line_ID = "c",
-                line_condition = "c",
-                line_source = "c",
-                plating_density = "i"
-              )
             ) %>%
               distinct()
           })
 
 metadata %<>%
-  rename(Metadata_Plate = plate_map_name, 
-         Metadata_Well = well_position,
-         Metadata_line_ID = line_ID,
-         Metadata_line_condition = line_condition,
-         Metadata_line_source = line_source,
-         Metadata_plating_density = plating_density)
+  rename(Plate = plate_map_name, 
+         Well = well_position)
+
+names(metadata) <- str_c("Metadata_", names(metadata))
 ```
 
 ## Report plating densities
@@ -96,7 +88,7 @@ set.seed(5)
 
 metadata_sampled <-
   metadata %>%
-  group_by(Metadata_line_ID) %>%
+  group_by(Metadata_line_ID, Metadata_line_condition, Metadata_compound_ID, Metadata_plating_density) %>%
   sample_n(1) %>%
   ungroup()
 ```
