@@ -121,6 +121,7 @@ cp ../neuronal-cell-painting/0.pilot-run-workflows/dcp_config_files/* ../cellpai
 # In R:
 # devtools::install_github("cytomining/cytotools")
 # After installing this package, run the snippet below, and add the output to your PATH:
+# library(cytotools)
 # normalizePath(file.path(path.package("cytotools"), "scripts"))
 
 # Run this https://cytomining.github.io/profiling-handbook/create-profiles.html#create-database-backend
