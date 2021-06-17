@@ -1,6 +1,5 @@
 ---
 title: "Select images to print"
-output: github_document
 ---
 
 ```{r message=FALSE}
