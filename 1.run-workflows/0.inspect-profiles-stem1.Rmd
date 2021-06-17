@@ -4,26 +4,6 @@ author: "Shantanu Singh"
 date: "Nov 2020"
 ---
 
-
-```{r echo=FALSE}
-show_table <- print
-```
-
-If running interactively in RStudio, 
-
-- change `output` in the header of this markdown to `html_notebook` and
-- change to `eval=TRUE` below
-
-When knitting for pushing to GitHub,
-
-- change `output` in the header of this markdown to `github_document` and
-- change to `eval=FALSE` below
-
-```{r eval=TRUE}
-show_table <- knitr::kable
-```
-
-
 ## Load libraries
 
 ```{r message=FALSE}
@@ -73,14 +53,12 @@ Report the size of feature spaces
 ```{r}
 tribble(~profile_type, ~feature_space,
         "all", length(variables)
-) %>%
-  show_table
+)
 ```
 
 ```{r}
 profiles %>% select(matches("Metadata_")) %>% 
-  head() %>%
-  show_table
+  head()
 ```
 
 ### How many replicates?
@@ -102,8 +80,7 @@ metadata %<>%
 
 metadata %>% 
   group_by(Metadata_line_ID) %>%
-  tally() %>%
-  show_table
+  tally()
 ```
 
 Report based on profiles (should be identical)
