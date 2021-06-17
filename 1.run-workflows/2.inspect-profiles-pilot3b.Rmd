@@ -4,26 +4,6 @@ author: "Shantanu Singh"
 date: "Nov 2020"
 ---
 
-
-```{r echo=FALSE}
-show_table <- print
-```
-
-If running interactively in RStudio, 
-
-- change `output` in the header of this markdown to `html_notebook` and
-- change to `eval=TRUE` below
-
-When knitting for pushing to GitHub,
-
-- change `output` in the header of this markdown to `github_document` and
-- change to `eval=FALSE` below
-
-```{r eval=TRUE}
-show_table <- knitr::kable
-```
-
-
 ## Load libraries
 
 ```{r message=FALSE}
@@ -71,14 +51,12 @@ Report the size of feature spaces
 ```{r}
 tribble(~profile_type, ~feature_space,
         "all", length(variables)
-) %>%
-  show_table
+)
 ```
 
 ```{r}
 profiles %>% select(matches("Metadata_")) %>% 
-  head() %>%
-  show_table
+  head()
 ```
 
 ### How many replicates?
@@ -101,8 +79,7 @@ metadata %<>%
 metadata %>% 
   group_by(Metadata_plating_density,
            Metadata_line_condition) %>%
-  tally() %>%
-  show_table
+  tally()
 ```
 
 Report based on profiles (will not be identical because not all wells were stained + imaged)
@@ -115,8 +92,7 @@ replicates_per_line <-
            Metadata_line_condition) %>%
   tally()
 
-replicates_per_line %>%
-  show_table
+replicates_per_line
 ```
 
 ### Audits
@@ -491,7 +467,7 @@ plot_and_save_similarities <- function(similarity, profile_type) {
                    glue("{plate_id}_profiles_similarity_vs_cell_count_similarity_{profile_type}.png")), 
          p, width = 7, height = 5)
   
-  similarity %>% write_csv(file.path("data", glue("NCP_PILOT_3_similarity_{profile_type}.csv")))
+  similarity %>% write_csv(file.path("data", glue("NCP_PILOT_3b_similarity_{profile_type}.csv")))
 }
 ```
 
