@@ -442,6 +442,7 @@ well_level_similarity_to_untrt <-
 Each well is compared with all the controls for that condition-density (n=32 in most cases)
 
 ```{r}
+set.seed(42)
 well_level_similarity_to_untrt %>% 
   group_by(Metadata_plating_density2, 
            Metadata_line_condition2, 
