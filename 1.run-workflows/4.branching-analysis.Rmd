@@ -1,0 +1,75 @@
+---
+title: "Inspect profiles"
+author: "Shantanu Singh"
+date: "June 2021"
+---
+
+# Load libraries
+
+```{r message=FALSE}
+library(ggplot2)
+library(glue)
+library(magrittr)
+library(tidyverse)
+```
+
+# Read profiles
+
+```{r message=FALSE}
+batch_id <- "NCP_PILOT_3B"
+
+platemap <- "MAtt_ICC_test"
+
+plate_id <- "MAtt_ICC_test"
+
+profiles_map2 <- 
+  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, "_augmented.csv.gz")), 
+           progress = FALSE)
+```
+
+```{r message=FALSE}
+batch_id <- "NCP_PILOT_3"
+
+platemap <- "BR_NCP_PILOT_3"
+
+plate_id <- "BR_NCP_PILOT_3"
+
+profiles_cp <- 
+  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, "_augmented.csv.gz")), 
+           progress = FALSE)
+```
+
+
+```{r}
+get_skel_features <- function(profiles) 
+  profiles %>% select(matches("Metadata_|Skel$"))
+
+count_wells <- function(profiles) 
+  profiles %>% group_by(across(matches("plating_density|line_condition|compound_ID"))) %>% tally()
+```
+
+
+```{r rows.print=40}
+count_wells(skel_map2)
+
+count_wells(skel_cp)
+```
+
+
+```{r}
+skel_map2 <- get_skel_features(profiles_map2)
+
+skel_cp <- get_skel_features(profiles_cp)
+```
+
+
+```{r fig.height=5, fig.width=5}
+skel_map2 %>%
+  pivot_longer(-matches("Metadata")) %>%
+  ggplot(aes(value)) + geom_histogram(bins = 50) + facet_wrap(~name, scales = "free", ncol = 1)
+```
+```{r fig.height=7, fig.width=5}
+skel_cp %>%
+  pivot_longer(-matches("Metadata")) %>%
+  ggplot(aes(value)) + geom_histogram(bins = 50) + facet_wrap(~name, scales = "free", ncol = 1)
+```
