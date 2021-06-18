@@ -192,3 +192,18 @@ skel %>%
   ggtitle("Branching metrics from Cell Painting and MAP2 images", 
           subtitle = "Only untreated wells")
 ```
+
+
+```{r fig.height=10, fig.width=7}
+skel %>%
+  pivot_longer(-matches("Metadata")) %>%
+  filter(str_detect(Metadata_compound_ID, "Untreated")) %>%
+  ggplot(aes(as.factor(Metadata_plating_density), value, fill=Metadata_compound_ID)) + 
+  geom_boxplot() + 
+  facet_grid(name~Metadata_line_condition, scales = "free") + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(legend.position="bottom") +
+  ggtitle("Branching metrics from Cell Painting and MAP2 images", 
+          subtitle = "Only untreated wells")
+```
+
