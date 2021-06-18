@@ -42,7 +42,7 @@ profiles_cp <-
 
 ```{r}
 get_skel_features <- function(profiles) 
-  profiles %>% select(matches("Metadata_|Skel$"))
+  profiles %>% select(matches("Metadata_|Skel$")) %>% select(-matches("_mito_skel$"))
 
 count_wells <- function(profiles) 
   profiles %>% group_by(across(matches("plating_density|line_condition|compound_ID"))) %>% tally()
@@ -68,7 +68,7 @@ skel_map2 %>%
   pivot_longer(-matches("Metadata")) %>%
   ggplot(aes(value)) + geom_histogram(bins = 50) + facet_wrap(~name, scales = "free", ncol = 1)
 ```
-```{r fig.height=7, fig.width=5}
+```{r fig.height=5, fig.width=5}
 skel_cp %>%
   pivot_longer(-matches("Metadata")) %>%
   ggplot(aes(value)) + geom_histogram(bins = 50) + facet_wrap(~name, scales = "free", ncol = 1)
