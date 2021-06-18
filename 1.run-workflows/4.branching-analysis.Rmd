@@ -41,13 +41,29 @@ profiles_cp <-
 
 
 ```{r}
+shorten_skel_feature_name <- function(s) 
+  s %>% 
+  str_remove("Nuclei_ObjectSkeleton_") %>% 
+  str_remove("_CellBodiesPlusNeuritesSkel")
+
 get_skel_features <- function(profiles) 
-  profiles %>% select(matches("Metadata_|Skel$")) %>% select(-matches("_mito_skel$"))
+  profiles %>% 
+  select(matches("Metadata_|Skel$")) %>% 
+  select(-matches("_mito_skel$")) %>%
+  rename_with(shorten_skel_feature_name)
+  
 
 count_wells <- function(profiles) 
   profiles %>% group_by(across(matches("plating_density|line_condition|compound_ID"))) %>% tally()
 ```
 
+# Report statistics
+
+## Global
+
+### Counts 
+
+Count wells per unique perturbations
 
 ```{r rows.print=40}
 count_wells(skel_map2)
@@ -55,6 +71,9 @@ count_wells(skel_map2)
 count_wells(skel_cp)
 ```
 
+### Branching metrics
+
+Get branching metrics
 
 ```{r}
 skel_map2 <- get_skel_features(profiles_map2)
@@ -62,14 +81,59 @@ skel_map2 <- get_skel_features(profiles_map2)
 skel_cp <- get_skel_features(profiles_cp)
 ```
 
+Plot these features
 
-```{r fig.height=5, fig.width=5}
+```{r}
 skel_map2 %>%
   pivot_longer(-matches("Metadata")) %>%
-  ggplot(aes(value)) + geom_histogram(bins = 50) + facet_wrap(~name, scales = "free", ncol = 1)
+  ggplot(aes(value)) + geom_histogram(bins = 50) + facet_wrap(~name, scales = "free")
 ```
-```{r fig.height=5, fig.width=5}
+
+
+```{r}
 skel_cp %>%
   pivot_longer(-matches("Metadata")) %>%
-  ggplot(aes(value)) + geom_histogram(bins = 50) + facet_wrap(~name, scales = "free", ncol = 1)
+  ggplot(aes(value)) + geom_histogram(bins = 50) + facet_wrap(~name, scales = "free")
+```
+
+```{r}
+variables <- names(skel_cp) %>% str_subset("Metadata_", negate = TRUE)
+skel_cp %>% 
+  cytominer::mark_outlier_rows(variables, skel_cp) %>% 
+  filter(!is_outlier) %>%
+  select(-is_outlier) %>%
+  pivot_longer(-matches("Metadata")) %>%
+  ggplot(aes(value)) + geom_histogram(bins = 50) + facet_wrap(~name, scales = "free")
+  
+```
+```{r}
+skel_cp <- 
+  skel_cp %>% 
+  cytominer::mark_outlier_rows(variables, skel_cp) %>% 
+  filter(!is_outlier) %>%
+  select(-is_outlier) 
+
+skel_cp %>%
+  count()
+```
+
+## Per condition
+
+### Branching metrics
+
+```{r fig.height=7, fig.width=5}
+skel_map2 %>%
+  pivot_longer(-matches("Metadata")) %>%
+  ggplot(aes(Metadata_line_condition, value)) + geom_boxplot() + 
+  facet_grid(name~Metadata_plating_density, scales = "free")
+```
+
+```{r fig.height=7, fig.width=7}
+skel_cp %>%
+  pivot_longer(-matches("Metadata")) %>%
+  ggplot(aes(Metadata_compound_ID, value, fill=Metadata_line_condition)) + 
+  geom_boxplot() + 
+  facet_grid(name~Metadata_plating_density, scales = "free") + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(legend.position="bottom")
 ```
