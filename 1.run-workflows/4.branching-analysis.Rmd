@@ -128,7 +128,7 @@ skel_map2 %>%
   facet_grid(name~Metadata_plating_density, scales = "free")
 ```
 
-```{r fig.height=7, fig.width=7}
+```{r fig.height=10, fig.width=7}
 skel_cp %>%
   pivot_longer(-matches("Metadata")) %>%
   ggplot(aes(Metadata_compound_ID, value, fill=Metadata_line_condition)) + 
