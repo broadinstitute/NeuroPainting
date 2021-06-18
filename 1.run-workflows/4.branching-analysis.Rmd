@@ -75,6 +75,14 @@ count_wells(skel_cp)
 
 Get branching metrics
 
+From http://cellprofiler-manual.s3.amazonaws.com/CellProfiler-3.0.0/modules/measurement.html#measureobjectskeleton
+
+- `NumberTrunks`: The number of trunks. Trunks are branchpoints that lie within the seed objects
+- `NumberNonTrunkBranches`: The number of non-trunk branches. Branches are the branchpoints that lie outside the seed objects.
+- `NumberBranchEnds`: The number of branch end-points, i.e, termini.
+- `TotalObjectSkeletonLength`: The length of all skeleton segments per object.
+
+
 ```{r}
 skel_map2 <- get_skel_features(profiles_map2)
 
@@ -136,4 +144,51 @@ skel_cp %>%
   facet_grid(name~Metadata_plating_density, scales = "free") + 
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(legend.position="bottom")
+```
+
+
+```{r}
+skel_cp <- 
+  skel_cp %>% 
+  select(
+    any_of(c("Metadata_plating_density", "Metadata_line_condition", "Metadata_compound_ID")), 
+    all_of(variables)) %>%
+  mutate(Metadata_compound_ID = replace_na(Metadata_compound_ID, "Untreated_CP"))
+
+skel_map2 <- 
+  skel_map2 %>% 
+  select(
+    any_of(c("Metadata_plating_density", "Metadata_line_condition", "Metadata_compound_ID")), 
+    all_of(variables)) %>%
+  mutate(Metadata_compound_ID = "Untreated_MAP2") %>%
+  select(matches("Metadata"), everything())
+```
+
+```{r}
+skel <-
+  bind_rows(skel_cp, skel_map2)
+```
+
+```{r fig.height=10, fig.width=7}
+skel %>%
+  pivot_longer(-matches("Metadata")) %>%
+  ggplot(aes(Metadata_compound_ID, value, fill=Metadata_line_condition)) + 
+  geom_boxplot() + 
+  facet_grid(name~Metadata_plating_density, scales = "free") + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(legend.position="bottom") +
+  ggtitle("Branching metrics from Cell Painting and MAP2 images", 
+          subtitle = "All compounds are from Cell Painting images")
+```
+```{r fig.height=10, fig.width=7}
+skel %>%
+  pivot_longer(-matches("Metadata")) %>%
+  filter(str_detect(Metadata_compound_ID, "Untreated")) %>%
+  ggplot(aes(Metadata_compound_ID, value, fill=Metadata_line_condition)) + 
+  geom_boxplot() + 
+  facet_grid(name~Metadata_plating_density, scales = "free") + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(legend.position="bottom") +
+  ggtitle("Branching metrics from Cell Painting and MAP2 images", 
+          subtitle = "Only untreated wells")
 ```
