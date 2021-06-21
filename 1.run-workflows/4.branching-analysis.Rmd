@@ -44,14 +44,15 @@ profiles_cp <-
 shorten_skel_feature_name <- function(s) 
   s %>% 
   str_remove("Nuclei_ObjectSkeleton_") %>% 
-  str_remove("_CellBodiesPlusNeuritesSkel")
+  str_remove("_CellBodiesPlusNeuritesSkel") %>%
+  str_replace("Nuclei_Number_Object_Number", "NumCells") %>%
+  str_replace("Number", "Num")
 
 get_skel_features <- function(profiles) 
   profiles %>% 
-  select(matches("Metadata_|Skel$")) %>% 
+  select(matches("Metadata_|Skel$|^Nuclei_Number_Object_Number$")) %>% 
   select(-matches("_mito_skel$")) %>%
   rename_with(shorten_skel_feature_name)
-  
 
 count_wells <- function(profiles) 
   profiles %>% group_by(across(matches("plating_density|line_condition|compound_ID"))) %>% tally()
@@ -66,9 +67,9 @@ count_wells <- function(profiles)
 Count wells per unique perturbations
 
 ```{r rows.print=40}
-count_wells(skel_map2)
+count_wells(profiles_map2)
 
-count_wells(skel_cp)
+count_wells(profiles_cp)
 ```
 
 ### Branching metrics
@@ -204,6 +205,19 @@ skel %>%
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(legend.position="bottom") +
   ggtitle("Branching metrics from Cell Painting and MAP2 images", 
+          subtitle = "Only untreated wells")
+```
+```{r fig.height=6, fig.width=6}
+skel %>%
+  filter(str_detect(Metadata_compound_ID, "Untreated")) %>%
+  ggplot(aes(NumNonTrunkBranches, NumBranchEnds, color = Metadata_compound_ID)) + 
+  geom_point() + 
+  geom_abline(slope = 1, alpha = 0.5) +
+  facet_grid(Metadata_plating_density ~ Metadata_compound_ID + Metadata_line_condition) + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(legend.position="bottom") +
+  coord_equal() +
+  ggtitle("Branch ends vs Non-trunck branches from Cell Painting and MAP2 images", 
           subtitle = "Only untreated wells")
 ```
 
