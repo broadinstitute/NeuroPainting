@@ -220,4 +220,14 @@ skel %>%
   ggtitle("Branch ends vs Non-trunck branches from Cell Painting and MAP2 images", 
           subtitle = "Only untreated wells")
 ```
-
+```{r fig.height=7, fig.width=7}
+skel %>%
+  filter(str_detect(Metadata_compound_ID, "Untreated")) %>%
+  ggplot(aes(NumCells, fill = Metadata_compound_ID)) + 
+  geom_histogram(bins = 20) + 
+  facet_grid(Metadata_plating_density ~ Metadata_compound_ID + Metadata_line_condition, scales = "free") + 
+  theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  theme(legend.position="bottom") +
+  ggtitle("Cell counts (proxy feature) from Cell Painting and MAP2 images", 
+          subtitle = "Only untreated wells")
+```
