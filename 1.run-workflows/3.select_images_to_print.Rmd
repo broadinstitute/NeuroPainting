@@ -224,4 +224,8 @@ outline_images %>%
   write_csv("data/sample_images_outline.csv")
 ```
 
+```{r}
+outline_images %>%
+  mutate(URL_Outline = str_c("[Outline](", URL_Outline, ")"))
+```
 
