@@ -224,8 +224,10 @@ outline_images %>%
   write_csv("data/sample_images_outline.csv")
 ```
 
-```{r}
+```{r results='asis'}
 outline_images %>%
-  mutate(URL_Outline = str_c("[Outline](", URL_Outline, ")"))
+  mutate(URL_Outline = str_c("[Outline](", URL_Outline, ")")) %>% 
+  select(Metadata_Batch, Metadata_plating_density, Metadata_line_condition, Metadata_compound_ID, URL_Outline, everything()) %>%
+  knitr::kable() 
 ```
 
