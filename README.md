@@ -9,3 +9,35 @@
 **SPARC Project Proposal:** [(gdoc)](https://docs.google.com/document/d/19uRqfbbwfTVl0vm1ubchO0tccvPs7kpXKlHxpxEDaHU/edit)
 
 **Planning document:** [(gdoc)](https://docs.google.com/document/d/1zEamFSAhJfkR7JPTmALCSpijIo1l7a-KzY32LPFUR48/edit)
+
+
+## Dataset summary
+
+There are 48 IPSC lines available for this project from the [22q cohort](https://docs.google.com/spreadsheets/d/1ShXDddzO5mK7-C6G_BQYM3H7y8-2sGOOUn5uRX6SXVk/edit#gid=0):
+
+
+|Metadata_line_source |Metadata_line_condition |  n|
+|:--------------------|:-----------------------|--:|
+|human                |control                 | 22|
+|human                |deletion                | 22|
+|isogenic_control     |control                 |  2|
+|isogenic_deletion    |deletion                |  2|
+
+
+<details>
+  <summary> Code </summary>
+  
+```r
+read_tsv("metadata/NCP_STEM_1/platemap/BR_NCP_STEM_1.txt") %>% 
+  distinct(line_ID, line_condition, line_source) %>% count(line_source, line_condition) %>% 
+  knitr::kable()
+```
+  
+</details>
+
+
+We have RNA-Seq data (Nehme, Pietiläinen, et al., submitted) for 20 healthy controls and 28 patients with 22q deletion, across 3 stages:
+ 
+- D0 (undifferentiated stem cells)
+- D4 (progenitors, with GFP)
+- D28 (neurons)
