@@ -1,0 +1,68 @@
+---
+title: "Inspect profiles"
+author: "Shantanu Singh"
+date: "June 2021"
+---
+
+## Load libraries
+
+```{r message=FALSE}
+library(ggplot2)
+library(glue)
+library(magrittr)
+library(tidyverse)
+```
+
+## Data overview
+
+### Read profiles
+
+```{r message=FALSE}
+batch_id <- "NCP_PROGENITORS_1"
+
+platemap <- "BR_NCP_PROGENITORS_1"
+
+plate_id <- "BR_NCP_PROGENITORS_1"
+
+profiles <- 
+  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, ".csv.gz")), 
+           progress = FALSE)
+```
+
+
+```{r message=FALSE}
+batch_id <- "NCP_PROGENITORS_1_BRANCHING"
+
+platemap <- "BR_NCP_PROGENITORS_1"
+
+plate_id <- "BR_NCP_PROGENITORS_1"
+
+profiles_branching <- 
+  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, ".csv.gz")), 
+           progress = FALSE)
+```
+
+
+```{r message=FALSE}
+variables <- str_subset(names(profiles), "Metadata_", negate = TRUE)
+
+variables_branching <- str_subset(names(profiles_branching), "Metadata_", negate = TRUE)
+```
+
+Report the size of feature spaces
+
+```{r}
+tribble(~profile_type, ~feature_space,
+        "non-branching", length(variables)
+)
+
+tribble(~profile_type, ~feature_space,
+        "branching", length(variables_branching)
+)
+```
+
+
+```{r rows.print=25}
+tibble(variables = variables_branching)
+```
+
