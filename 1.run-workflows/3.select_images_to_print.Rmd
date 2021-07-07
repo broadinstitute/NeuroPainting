@@ -1,6 +1,5 @@
 ---
 title: "Select images to print"
-output: github_document
 ---
 
 ```{r message=FALSE}
@@ -11,12 +10,20 @@ library(stringr)
 library(tidyverse)
 ```
 
-## Prepare load_data 
+# Prepare load_data 
 
 ```{r prepare_load_data, message=FALSE}
-load_data <- 
-  list.files("load_data_csv/", pattern = "load_data.csv", full.names = T, recursive = T)  %>%
-  map_df(read_csv)
+load_data <-
+  list.files(
+    "load_data_csv",
+    pattern = "load_data.csv",
+    full.names = T,
+    recursive = T
+  )  %>%
+  map_df(function(filename) {
+    df <- read_csv(filename)
+    df <- df %>% mutate(Metadata_Batch = str_split(filename, "/")[[1]][2])
+  })
 
 convert_to_s3_url <- function(pathname, filename)  {
   file.path(
@@ -44,7 +51,7 @@ for (channel in channels) {
 
 ```
 
-## Get metadata
+# Get metadata
 
 ```{r message=FALSE}
 
@@ -52,7 +59,9 @@ datasets <-
   tribble(
     ~batch, ~plate,
     "NCP_STEM_1", "BR_NCP_STEM_1",
-    "NCP_PROGENITORS_1", "BR_NCP_PROGENITORS_1"
+    "NCP_PROGENITORS_1", "BR_NCP_PROGENITORS_1",
+    "NCP_PILOT_3", "BR_NCP_PILOT_3",
+    "NCP_PILOT_3B", "MAtt_ICC_test"
   )
 
 metadata <-
@@ -61,60 +70,51 @@ metadata <-
           function(batch, plate) {
             read_tsv(
               file.path("metadata", glue("{batch}/platemap/{plate}.txt")),
-              col_types = cols_only(
-                plate_map_name = "c",
-                well_position = "c",
-                line_ID = "c",
-                line_condition = "c",
-                line_source = "c",
-                plating_density = "i"
-              )
             ) %>%
+              mutate(Batch = batch) %>%
               distinct()
           })
 
 metadata %<>%
-  rename(Metadata_Plate = plate_map_name, 
-         Metadata_Well = well_position,
-         Metadata_line_ID = line_ID,
-         Metadata_line_condition = line_condition,
-         Metadata_line_source = line_source,
-         Metadata_plating_density = plating_density)
+  rename(Plate = plate_map_name, 
+         Well = well_position)
+
+names(metadata) <- str_c("Metadata_", names(metadata))
 ```
 
-## Report plating densities
+# Report plating densities
 
 ```{r}
-metadata %>% group_by(Metadata_Plate, Metadata_plating_density) %>% tally()
+metadata %>% group_by(Metadata_Batch, Metadata_Plate, Metadata_plating_density) %>% tally()
 ```
 
 
-## Sample one well per cell line
+# Sample one well per cell line
 
 ```{r}
 set.seed(5)
 
 metadata_sampled <-
   metadata %>%
-  group_by(Metadata_line_ID) %>%
+  group_by(Metadata_Batch, Metadata_line_ID, Metadata_line_condition, Metadata_compound_ID, Metadata_plating_density) %>%
   sample_n(1) %>%
   ungroup()
 ```
 
-## Select a fixed field (a.k.a site)
+# Select a fixed field (a.k.a site)
 
 ```{r}
 fieldIDs <- c(3, 5)
 ```
 
-## Select images to be printed
+# Select images to be printed
 
 ```{r}
 filenames_header <- paste0("FileName_Orig", channels)
 
 images <- 
   load_data %>%
-  select(Metadata_Plate, Metadata_Well, Metadata_Row, Metadata_FieldID, matches("^URL_"), one_of(filenames_header)) %>%
+  select(Metadata_Batch, Metadata_Plate, Metadata_Well, Metadata_Row, Metadata_FieldID, matches("^URL_"), one_of(filenames_header)) %>%
   inner_join(metadata_sampled, by = c("Metadata_Plate", "Metadata_Well")) %>%
   filter(Metadata_FieldID %in% fieldIDs) %>%
   select(matches("^Metadata"), matches("^URL"), matches("^FileName_Orig"))
@@ -155,5 +155,79 @@ parallel \
  --eta \
  --joblog ${IMAGE_DIR}/download.log \
  wget -q -O ${IMAGE_DIR}/{1}/{4} {5}
+```
+
+
+# Generate outline URLs
+
+Below, we create `URL_Outline` using `URL_OrigDNA` as the starting point.
+
+Outlines are currently available only for `NCP_PILOT_3` and `NCP_PILOT_3B`
+
+`URL_OrigDNA`:
+https://s3.amazonaws.com/imaging-platform/projects/2019_05_28_Neuronal_Cell_Painting/workspace/analysis/NCP_PILOT_3/BR_NCP_PILOT_3/analysis/BR_NCP_PILOT_3-A18-3/r01c18f03p01-ch5sk1fk1fl1_Overlay.png	
+
+`URL_Outline`:
+https://s3.amazonaws.com/imaging-platform/projects/2019_05_28_Neuronal_Cell_Painting/NCP_PILOT_3/images/BR_NCP_PILOT_3/Images/r01c18f03p01-ch5sk1fk1fl1.tiff
+
+Note: Depending on how the Outline filename was defined the CellProfiler pipeline, you may need to choose a different channel as the starting point and also change the z plane.
+
+E.g. if the pipeline was configured differently, we'd have different values in `?` for `r01c18f03p0?-ch?sk1fk1fl1_Overlay.png`
+
+Only `NCP_PILOT_3B` and `NCP_PILOT_1` have 3 planes
+
+```{r}
+load_data %>% distinct(Metadata_Batch, Metadata_PlaneID) %>% filter(Metadata_PlaneID > 1)
+```
+
+```{r}
+plane_batch <-
+  tribble(~Metadata_Batch, ~ Metadata_PlaneID_outline,
+           "NCP_PILOT_3B", 3,
+           "NCP_PILOT_3", 1)
+
+outline_images <-
+  load_data %>%
+  filter(Metadata_Batch %in% c("NCP_PILOT_3", "NCP_PILOT_3B")) %>%
+  inner_join(plane_batch) %>%
+  filter(Metadata_PlaneID_outline == Metadata_PlaneID) %>%
+  select(
+    Metadata_Batch,
+    Metadata_Plate,
+    Metadata_Well,
+    Metadata_Row,
+    Metadata_FieldID,
+    matches("^URL_")
+  ) %>%
+  inner_join(metadata_sampled,
+             by = c("Metadata_Batch", "Metadata_Plate", "Metadata_Well")) %>%
+  filter(Metadata_FieldID %in% fieldIDs) %>%
+  select(matches("^Metadata"), matches("^URL")) %>%
+  mutate(
+    URL_Outline =
+      file.path(
+        dirname(dirname(dirname(dirname(
+          dirname(URL_OrigDNA)
+        )))),
+        "workspace",
+        "analysis",
+        Metadata_Batch,
+        Metadata_Plate,
+        "analysis",
+        str_c(Metadata_Plate, "-", Metadata_Well, "-", Metadata_FieldID),
+        str_replace(basename(URL_OrigDNA), "\\.tiff", "_Overlay.png")
+      )
+  ) %>%
+  select(matches("^Metadata"), URL_Outline)
+  
+outline_images %>%
+  write_csv("data/sample_images_outline.csv")
+```
+
+```{r results='asis'}
+outline_images %>%
+  mutate(URL_Outline = str_c("[Outline](", URL_Outline, ")")) %>% 
+  select(Metadata_Batch, Metadata_plating_density, Metadata_line_condition, Metadata_compound_ID, URL_Outline, everything()) %>%
+  knitr::kable() 
 ```
 
