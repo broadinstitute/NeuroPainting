@@ -41,3 +41,75 @@ We have RNA-Seq data (Nehme, Pietiläinen, et al., submitted) for 20 healthy co
 - D0 (undifferentiated stem cells)
 - D4 (progenitors, with GFP)
 - D28 (neurons)
+
+
+## Computational environment
+
+### Python
+
+We use [conda](https://docs.conda.io/en/latest/) to manage the computational environment.
+
+To install conda see [instructions](https://docs.conda.io/en/latest/miniconda.html).
+
+We recommend installing conda by downloading and executing the `.sh` file and accepting defaults.
+
+After installing conda, execute the following to install and navigate to the environment:
+
+```bash
+# First, install the `lincs` conda environment
+conda env create --force --file environment.yml
+
+# If you had already installed this environment and now want to update it
+conda env update --file environment.yml --prune
+
+# Then, activate the environment and you're all set!
+conda activate pooled-cell-painting-analysis
+```
+
+### R
+
+We use [`renv`](https://rstudio.github.io/renv/index.html) to reproduce R code. 
+We recommend using RStudio as your IDE.
+
+Checkout this repository and then load the project `neuronal-cell-painting.Rproj` in RStudio. 
+You should see this
+
+```
+# Bootstrapping renv 0.13.1 --------------------------------------------------
+* Downloading renv 0.13.1 ... OK
+* Installing renv 0.13.1 ... Done!
+* Successfully installed and loaded renv 0.13.1.
+* Project '~/Downloads/pooled-cell-painting-data-analysis.Rproj' loaded. [renv 0.13.1]
+* The project library is out of sync with the lockfile.
+* Use `renv::restore()` to install packages recorded in the lockfile.
+```
+
+Now run `renv::restore()` and you're ready to run the R scripts in this repo.
+
+Note: If you end up with issues with compiling libraries and you are on OSX, it's probably something to do with the macOS toolchain for versions of R starting at 4.y.z. being broken. 
+Follow these [instructions](https://thecoatlessprofessor.com/programming/cpp/r-compiler-tools-for-rcpp-on-macos/) to get set up.
+
+#### Creating a new R notebook
+
+Here's an example directory structure for a directory `<project>/<module-name>` containing an R notebook.
+Note that R and Python notebooks can co-exist in the same directory 
+
+```
+<module-name>/
+├── 0.knit-notebooks.R
+├── 1.inspect-data.Rmd
+├── _output.yaml
+├── knit_notebooks
+│   ├── 1.inspect-data.md
+│   └── 1.inspect-data_files
+```
+
+Here are the steps to follow to create add such a notebook to this repo
+
+- Create a stub for `1.inspect-data.Rmd` 
+- Copy [`_output.yaml`](https://gist.github.com/shntnu/12f5124fc0b8d9fbcef2765b89af9668) and [`0.knit-notebooks.R`](https://gist.github.com/shntnu/db9794e3d2ffbed09e290ffbb150512f) into the directory if it does not already exist
+- Create a directory `knit_notebooks`; this is where the rendered versions of the notebooks will live
+- Edit `0.knit-notebooks.R` to add `render_notebook("1.inspect-cp221")`, which will render this notebook in markdown int the `knit_notebooks` directory
+- Now continue doing your analysis in `1.inspect-cp221.Rmd` and run things interactively as you would
+- When its time to commit, generate the markdown for the notebook by running `0.knit-notebooks.R`. Ensure that your current working directory is the parent directory of `0.knit-notebooks.R` before doing so. As you add more notebooks to the directory, `0.knit-notebooks.R` will have more entries in it, but you may want to only render your latest notebook. In this case, you'd need to run things by hand: first run the function definition for `render_notebook()` and then run `render_notebook("1.inspect-data")`. This will render the file `1.inspect-data.md` along with the figures in `1.inspect-data_files`. You should commit all of this to the repo.
+- 
