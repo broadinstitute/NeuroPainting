@@ -30,3 +30,6 @@ render_notebook("2.inspect-profiles-pilot3b")
 render_notebook("3.select_images_to_print")
 
 render_notebook("4.branching-analysis")
+
+render_notebook("5.inspect-profiles-progenitors1")
+
