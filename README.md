@@ -42,6 +42,10 @@ We have RNA-Seq data (Nehme, Pietiläinen, et al., submitted) for 20 healthy co
 - D4 (progenitors, with GFP)
 - D28 (neurons)
 
+## Experiment schedule
+
+(Upcoming experiments go here)
+
 
 ## Computational environment
 
