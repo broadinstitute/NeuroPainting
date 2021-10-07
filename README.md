@@ -44,8 +44,9 @@ We have RNA-Seq data (Nehme, Pietiläinen, et al., submitted) for 20 healthy co
 
 ## Experiment schedule
 
-(Upcoming experiments go here)
-
+-D0 experiment completed 
+-D4 experiment completed 
+-D28 experiment estimated to be done 2021-10-7
 
 ## Computational environment
 
