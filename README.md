@@ -23,6 +23,7 @@ There are 48 IPSC lines available for this project from the [22q cohort](https:/
 |isogenic_control     |control                 |  2|
 |isogenic_deletion    |deletion                |  2|
 
+Profiles from newer datasets (2022 onwards) are in this data repo https://github.com/broadinstitute/2019_05_28_Neuronal_Cell_Painting
 
 <details>
   <summary> Code </summary>
