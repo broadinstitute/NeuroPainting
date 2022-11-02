@@ -23,8 +23,6 @@ There are 48 IPSC lines available for this project from the [22q cohort](https:/
 |isogenic_control     |control                 |  2|
 |isogenic_deletion    |deletion                |  2|
 
-Profiles from newer datasets (2022 onwards) are in this data repo https://github.com/broadinstitute/2019_05_28_Neuronal_Cell_Painting
-
 <details>
   <summary> Code </summary>
   
@@ -33,9 +31,19 @@ read_tsv("metadata/NCP_STEM_1/platemap/BR_NCP_STEM_1.txt") %>%
   distinct(line_ID, line_condition, line_source) %>% count(line_source, line_condition) %>% 
   knitr::kable()
 ```
-  
 </details>
 
+
+| Experiment                   | Plate                   | Features      | Profiles                                                                                                                                                 | Notes                                                                                                                                         |
+| ---------------------------- | ----------------------- | ------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| NCP Stem 1                   | BR\_NCP\_STEM\_1        | Cell Painting | [GitHub](https://github.com/broadinstitute/neuronal-cell-painting/tree/master/1.run-workflows/profiles/NCP_STEM_1/BR_NCP_STEM_1)                         |                                                                                                                                               |
+| NCP Progenitor 1             | BR\_NCP\_PROGENITORS\_1 | Cell Painting | [GitHub](https://github.com/broadinstitute/neuronal-cell-painting/tree/master/1.run-workflows/profiles/NCP_PROGENITORS_1/BR_NCP_PROGENITORS_1)           | This was the first attempt but it failed ([notes](https://github.com/broadinstitute/neuronal-cell-painting/issues/10#issuecomment-740777303)) |
+|                              | BR\_NCP\_PROGENITORS\_1 | Branching     | [GitHub](https://github.com/broadinstitute/neuronal-cell-painting/tree/master/1.run-workflows/profiles/NCP_PROGENITORS_1_BRANCHING/BR_NCP_PROGENITORS_1) |                                                                                                                                               |
+|                              | BR00127194              | Cell Painting | [GitHub](https://github.com/broadinstitute/neuronal-cell-painting/tree/master/1.run-workflows/profiles/NCP_PROGENITORS_1/BR00127194)                     | This is a repeat plate ([notes)](https://github.com/broadinstitute/neuronal-cell-painting/issues/10#issuecomment-909397555).                  |
+|                              |                         |               |                                                                                                                                                          |                                                                                                                                               |
+| NCP Neuron 1 - Cell Painting |                         |               |                                                                                                                                                          |
+
+Profiles from newer datasets (2022 onwards) are in this data repo https://github.com/broadinstitute/2019_05_28_Neuronal_Cell_Painting
 
 We have RNA-Seq data (Nehme, Pietiläinen, et al., submitted) for 20 healthy controls and 28 patients with 22q deletion, across 3 stages:
  
@@ -118,4 +126,3 @@ Here are the steps to follow to create add such a notebook to this repo
 - Edit `0.knit-notebooks.R` to add `render_notebook("1.inspect-cp221")`, which will render this notebook in markdown int the `knit_notebooks` directory
 - Now continue doing your analysis in `1.inspect-cp221.Rmd` and run things interactively as you would
 - When its time to commit, generate the markdown for the notebook by running `0.knit-notebooks.R`. Ensure that your current working directory is the parent directory of `0.knit-notebooks.R` before doing so. As you add more notebooks to the directory, `0.knit-notebooks.R` will have more entries in it, but you may want to only render your latest notebook. In this case, you'd need to run things by hand: first run the function definition for `render_notebook()` and then run `render_notebook("1.inspect-data")`. This will render the file `1.inspect-data.md` along with the figures in `1.inspect-data_files`. You should commit all of this to the repo.
-- 
