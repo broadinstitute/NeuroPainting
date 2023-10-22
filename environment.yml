@@ -14,6 +14,7 @@ dependencies:
   - conda-forge::scipy=1.5.2
   - conda-forge::seaborn=0.11.0
   - conda-forge::statsmodels=0.12.0
+  - conda-forge::plotly=5.17.0
   - pip:
       - git+https://github.com/cytomining/pycytominer@838ac2eee8bee09b50a1ec8077201c01f7882c69
       - git+https://github.com/cytomining/cytominer-eval@f7f5b293da54d870e8ba86bacf7dbc874bb79565
