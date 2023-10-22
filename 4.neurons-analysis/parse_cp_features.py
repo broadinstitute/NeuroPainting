@@ -26,9 +26,11 @@ def parse_cp_features(
         raise ValueError(f"Expected a string, got {type(feature).__name__}")
     if not isinstance(channels, list):
         raise ValueError(f"Expected a list, got {type(channels).__name__}")
+
     def channel_standardizer(channel):
         channel = channel.replace("Orig", "")
         return channel
+
     unique_token = "XUNIQUEX"
     tokenized_feature = feature
     for channel in channels:
