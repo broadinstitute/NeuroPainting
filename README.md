@@ -1,8 +1,6 @@
 # Unpacking the Biology of Psychiatric Genetics using Cell Painting
 
-
 **Here, we propose to adapt the Cell Painting assay to interrogate traits in neuronal cells, and apply it to a cohort of 48 cell lines carrying the 22q11.2 deletion, a genetic variant strongly associated with psychiatric disease, to test the utility of neuronal Cell Painting in identifying disease relevant phenotypes in a high-throughput setting.** Our work will bring together groups at the Imaging Platform and the Stanley Center to create a new strategy that could be integrated into multiple existing platforms at the Broad to enable, for the first time, the scaled investigation of neuronal profiles. We anticipate that the workflows we will create will facilitate phenotypic screening of neurons at a scale that begins to match the transcriptional revolution, and constitute a key technology to help move from genetics to cellular phenotypes to actionable biology and mechanisms. Gaining insight into neuronal morphology in health and disease will illuminate previously unknown aspects of neuronal biology, enable the interrogation of the effect of the hundreds of genetic risk variants on cellular phenotypes, and greatly complement several existing technologies pioneered at the Broad Institute such as CRISPR screens, drug screens, optical profiling and in situ sequencing to catalyze unprecedented discoveries that link genes and perturbations to neuronal phenotypes.
-
 
 ## Documents
 
@@ -10,18 +8,16 @@
 
 **Planning document:** [(gdoc)](https://docs.google.com/document/d/1zEamFSAhJfkR7JPTmALCSpijIo1l7a-KzY32LPFUR48/edit)
 
-
 ## Dataset summary
 
 There are 48 IPSC lines available for this project from the [22q cohort](https://docs.google.com/spreadsheets/d/1ShXDddzO5mK7-C6G_BQYM3H7y8-2sGOOUn5uRX6SXVk/edit#gid=0):
 
-
-| Metadata_line_source | Metadata_line_condition |    n |
-| :------------------- | :---------------------- | ---: |
-| human                | control                 |   22 |
-| human                | deletion                |   22 |
-| isogenic_control     | control                 |    2 |
-| isogenic_deletion    | deletion                |    2 |
+| Metadata_line_source | Metadata_line_condition |  n |
+|:---------------------|:------------------------|---:|
+| human                | control                 | 22 |
+| human                | deletion                | 22 |
+| isogenic_control     | control                 |  2 |
+| isogenic_deletion    | deletion                |  2 |
 
 <details>
   <summary> Code </summary>
@@ -31,29 +27,30 @@ read_tsv("metadata/NCP_STEM_1/platemap/BR_NCP_STEM_1.txt") %>%
   distinct(line_ID, line_condition, line_source) %>% count(line_source, line_condition) %>%
   knitr::kable()
 ```
+
 </details>
 
 TODO: All this information should be moved to the [Project Profiler airtable](https://airtable.com/appctUGldmRNkVS19/tblXX3mTxhCR9Bxbq/viwNJfGOOJot7Wr3x?blocks=hide).
+
 TODO: Fill in information about number of features
 
-| Experiment                   | Plate            | Features               | Magnification | Profiles                                                                                                                                              | Notes                                                                                                                                               |
-| ---------------------------- | ---------------- | ---------------------- | ------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| NCP Stem 1                   | BR\_NCP\_STEM\_1 | Cell Painting (n=4293) | 20x           | [GitHub](1.run-workflows/profiles/NCP_STEM_1/BR_NCP_STEM_1)                                                                                           |                                                                                                                                                     |
+| Experiment                   | Plate            | Features                                              | Magnification | Profiles                                                                                                                                              | Notes                                                                                                                                               |
+|------------------------------|------------------|-------------------------------------------------------|---------------|-------------------------------------------------------------------------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------|
+| NCP Stem 1                   | BR\_NCP\_STEM\_1 | Cell Painting (n=4293)                                | 20x           | [GitHub](1.run-workflows/profiles/NCP_STEM_1/BR_NCP_STEM_1)                                                                                           |                                                                                                                                                     |
 | NCP Progenitor 1             | BR00127194       | Cell Painting (n=4295, includes 4 branching features) | 20x           | [GitHub](1.run-workflows/profiles/NCP_PROGENITORS_1/BR00127194)                                                                                       | This is a repeat of an experiment that failed ([notes)](https://github.com/broadinstitute/neuronal-cell-painting/issues/10#issuecomment-909397555). |
-| NCP Neuron 1 - Cell Painting | BR00132672       |                        | 20x           | [S3](https://imaging-platform.s3.amazonaws.com/projects/2019_05_28_Neuronal_Cell_Painting/workspace/profiles/2022_03_03_NCP_NEURONS_2_20x/BR00132672) | ([notes](https://github.com/broadinstitute/neuronal-cell-painting/issues/21#issuecomment-1077803763))                                               |
-| NCP Neuron 1 - Cell Painting | BR00132672       |                        | 63x           | [S3](https://imaging-platform.s3.amazonaws.com/projects/2019_05_28_Neuronal_Cell_Painting/workspace/profiles/2022_03_03_NCP_NEURONS_2_63x/BR00132672) | same ^^^                                                                                                                                            |
-| NCP Neuron 1 - Cell Painting | BR00132673       |                        | 20x           | [S3](https://imaging-platform.s3.amazonaws.com/projects/2019_05_28_Neuronal_Cell_Painting/workspace/profiles/2022_03_03_NCP_NEURONS_2_20x/BR00132673) | same ^^^                                                                                                                                            |
-| NCP Neuron 1 - Cell Painting | BR00132673       |                        | 63x           | [S3](https://imaging-platform.s3.amazonaws.com/projects/2019_05_28_Neuronal_Cell_Painting/workspace/profiles/2022_03_03_NCP_NEURONS_2_63x/BR00132673) | same ^^^                                                                                                                                            |
+| NCP Neuron 1 - Cell Painting | BR00132672       |                                                       | 20x           | [S3](https://imaging-platform.s3.amazonaws.com/projects/2019_05_28_Neuronal_Cell_Painting/workspace/profiles/2022_03_03_NCP_NEURONS_2_20x/BR00132672) | ([notes](https://github.com/broadinstitute/neuronal-cell-painting/issues/21#issuecomment-1077803763))                                               |
+| NCP Neuron 1 - Cell Painting | BR00132672       |                                                       | 63x           | [S3](https://imaging-platform.s3.amazonaws.com/projects/2019_05_28_Neuronal_Cell_Painting/workspace/profiles/2022_03_03_NCP_NEURONS_2_63x/BR00132672) | same ^^^                                                                                                                                            |
+| NCP Neuron 1 - Cell Painting | BR00132673       |                                                       | 20x           | [S3](https://imaging-platform.s3.amazonaws.com/projects/2019_05_28_Neuronal_Cell_Painting/workspace/profiles/2022_03_03_NCP_NEURONS_2_20x/BR00132673) | same ^^^                                                                                                                                            |
+| NCP Neuron 1 - Cell Painting | BR00132673       |                                                       | 63x           | [S3](https://imaging-platform.s3.amazonaws.com/projects/2019_05_28_Neuronal_Cell_Painting/workspace/profiles/2022_03_03_NCP_NEURONS_2_63x/BR00132673) | same ^^^                                                                                                                                            |
 
 Failed experiments
 
 | Experiment       | Plate                   | Features               | Profiles                                                                            | Notes                                                                                                                                         |
-| ---------------- | ----------------------- | ---------------------- | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+|------------------|-------------------------|------------------------|-------------------------------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------|
 | NCP Progenitor 1 | BR\_NCP\_PROGENITORS\_1 | Cell Painting (n=4293) | [GitHub](1.run-workflows/profiles/NCP_PROGENITORS_1/BR_NCP_PROGENITORS_1)           | This was the first attempt but it failed ([notes](https://github.com/broadinstitute/neuronal-cell-painting/issues/10#issuecomment-740777303)) |
 |                  | BR\_NCP\_PROGENITORS\_1 | Branching (n=23)       | [GitHub](1.run-workflows/profiles/NCP_PROGENITORS_1_BRANCHING/BR_NCP_PROGENITORS_1) | Same as above, only branching metrics                                                                                                         |
 
-
-Profiles from newer datasets (2022 onwards) are in this data repo https://github.com/broadinstitute/2019_05_28_Neuronal_Cell_Painting
+Profiles from newer datasets (2022 onwards) are in this data repo <https://github.com/broadinstitute/2019_05_28_Neuronal_Cell_Painting>
 
 We have RNA-Seq data (Nehme, Pietiläinen, et al., submitted) for 20 healthy controls and 28 patients with 22q deletion, across 3 stages:
 
@@ -61,33 +58,26 @@ We have RNA-Seq data (Nehme, Pietiläinen, et al., submitted) for 20 healthy co
 - D4 (progenitors, with GFP)
 - D28 (neurons)
 
-## Experiment schedule
-
-- D0 experiment completed
-- D4 experiment completed
-- D28 experiment estimated to be done 2021-10-7
-
 ## Computational environment
 
-### Python
+### Python environment
 
-We use [conda](https://docs.conda.io/en/latest/) to manage the computational environment.
+We use [mamba](https://mamba.readthedocs.io/en/latest/) to manage the computational environment.
 
-To install conda see [instructions](https://docs.conda.io/en/latest/miniconda.html).
+To install mamba see [instructions](https://mamba.readthedocs.io/en/latest/installation.html).
 
-We recommend installing conda by downloading and executing the `.sh` file and accepting defaults.
-
-After installing conda, execute the following to install and navigate to the environment:
+After installing mamba, execute the following to install and navigate to the environment:
 
 ```bash
-# First, install the `lincs` conda environment
-conda env create --force --file environment.yml
+# First, install the conda environment
+mamba env create --force --file environment.yml
 
 # If you had already installed this environment and now want to update it
-conda env update --file environment.yml --prune
+mamba env update --file environment.yml --prune
 
 # Then, activate the environment and you're all set!
-conda activate pooled-cell-painting-analysis
+environment_name=$(grep "name:" environment.yml | awk '{print $2}')
+mamba activate $environment_name
 ```
 
 ### R
@@ -98,12 +88,12 @@ We recommend using RStudio as your IDE.
 Checkout this repository and then load the project `neuronal-cell-painting.Rproj` in RStudio.
 You should see this
 
-```
+```text
 # Bootstrapping renv 0.13.1 --------------------------------------------------
 * Downloading renv 0.13.1 ... OK
 * Installing renv 0.13.1 ... Done!
 * Successfully installed and loaded renv 0.13.1.
-* Project '~/Downloads/pooled-cell-painting-data-analysis.Rproj' loaded. [renv 0.13.1]
+* Project '~/Downloads/neuronal-cell-painting.Rproj' loaded. [renv 0.13.1]
 * The project library is out of sync with the lockfile.
 * Use `renv::restore()` to install packages recorded in the lockfile.
 ```
@@ -118,7 +108,7 @@ Follow these [instructions](https://thecoatlessprofessor.com/programming/cpp/r-c
 Here's an example directory structure for a directory `<project>/<module-name>` containing an R notebook.
 Note that R and Python notebooks can co-exist in the same directory
 
-```
+```text
 <module-name>/
 ├── 0.knit-notebooks.R
 ├── 1.inspect-data.Rmd
