@@ -1,91 +1,98 @@
-from sklearn.model_selection import GroupShuffleSplit
 import pandas as pd
-
-
-def split_data(
-    df,
-    target_col,
-    feature_cols,
-    group_split_col,
-    train_size=0.8,
-    random_state=42,
-):
-    """
-    Split the data into training and test sets, keeping the DataFrame structure.
-
-    Parameters:
-    - df: DataFrame, the data.
-    - target_col: str, the target variable column.
-    - feature_cols: list, the feature columns.
-    - group_split_col: str, the column to group by for splitting.
-    - train_size: float, proportion of the dataset to include in the train split.
-    - random_state: int, seed used by the random number generator.
-
-    Returns:
-    - X_train, X_test, y_train, y_test: DataFrames or Series, the split data.
-    """
-
-    if not set(feature_cols + [target_col, group_split_col]).issubset(df.columns):
-        raise ValueError("One or more provided columns do not exist in the DataFrame.")
-
-    X = df[feature_cols]
-    y = df[target_col]
-    gss = GroupShuffleSplit(
-        n_splits=1, train_size=train_size, random_state=random_state
-    )
-
-    for train_idx, test_idx in gss.split(X, y, df[group_split_col]):
-        X_train, X_test = X.iloc[train_idx], X.iloc[test_idx]
-        y_train, y_test = y.iloc[train_idx], y.iloc[test_idx]
-
-    return X_train, X_test, y_train, y_test
-
+import numpy as np
 
 from sklearn.linear_model import LogisticRegression
 from sklearn.impute import SimpleImputer
 from sklearn.pipeline import make_pipeline
+from sklearn.model_selection import GroupKFold
+from sklearn.metrics import accuracy_score
+
+from scipy import stats as ss
+import statsmodels.stats.multitest
+import os
 
 
-def logistic_regression(X_train, y_train, X_test, y_test):
+def logistic_regression(X, y):
     """
-    Perform logistic regression with imputation and return the accuracy score and feature weights.
+    Fit logistic regression with imputation.
 
     Parameters:
-    - X_train, X_test: DataFrames, the training and test feature data.
-    - y_train, y_test: Series, the training and test target data.
+    - X: DataFrame, the feature data.
+    - y: Series, the target data.
 
     Returns:
-    - accuracy: float, the accuracy of the model.
-    - feature_weights: DataFrame, weights of each feature.
+    - pipeline: Fitted pipeline object.
     """
-
     # Create a pipeline with an imputer and the logistic regression model
-    # The imputer will fill in missing values with the median of the column
     pipeline = make_pipeline(
         SimpleImputer(strategy="median"), LogisticRegression(max_iter=10000)
     )
 
-    # Train the model using the pipeline
-    pipeline.fit(X_train, y_train)
+    # Fit the model using the pipeline
+    pipeline.fit(X, y)
 
-    # Predict on the test data and calculate accuracy score using the pipeline
-    accuracy = pipeline.score(X_test, y_test)
-
-    # Extract the trained logistic regression model from the pipeline
-    logisticRegr = pipeline.named_steps["logisticregression"]
-
-    # Extract feature weights and associate them with the feature names from X_train
-    feature_weights = pd.DataFrame(
-        logisticRegr.coef_[0],
-        columns=["weight"],
-        index=X_train.columns,  # Use the DataFrame's columns as the index for feature names
-    ).sort_values(by="weight", ascending=False)
-
-    return accuracy, feature_weights
+    return pipeline
 
 
-from scipy import stats as ss
-import statsmodels.stats.multitest
+def group_kfold_cross_validate_logistic_regression(
+    df, feature_cols, target_col, group_col, n_splits=5
+):
+    """
+    Perform Group K-Fold cross-validation on logistic regression and return the mean accuracy.
+
+    Parameters:
+    - df: DataFrame, the data.
+    - feature_cols: list, the feature columns.
+    - target_col: str, the target column.
+    - group_col: str, the column to group by for cross-validation.
+    - n_splits: int, number of folds for Group K-Fold cross-validation.
+
+    Returns:
+    - mean_accuracy: float, the mean accuracy across all folds.
+    - std_accuracy: float, the std accuracy across all folds.
+    - feature_importances: DataFrame, the feature importances averaged over all folds.
+    """
+    # Initialize the Group K-Fold
+    gkf = GroupKFold(n_splits=n_splits)
+
+    # Prepare features, target, and groups
+    X = df[feature_cols]
+    y = df[target_col]
+    groups = df[group_col]
+
+    # Store each fold's accuracy and feature importances
+    accuracies = []
+    feature_importances = []
+
+    # Perform cross-validation
+    for train_index, test_index in gkf.split(X, y, groups=groups):
+        # Split the data
+        X_train, X_test = X.iloc[train_index], X.iloc[test_index]
+        y_train, y_test = y.iloc[train_index], y.iloc[test_index]
+
+        # Fit logistic regression
+        pipeline = logistic_regression(X_train, y_train)
+
+        # Predict on the test data and calculate accuracy
+        y_pred = pipeline.predict(X_test)
+        accuracy = accuracy_score(y_test, y_pred)
+        accuracies.append(accuracy)
+
+        # Get feature importances
+        logistic_regr = pipeline.named_steps["logisticregression"]
+        feature_importances.append(logistic_regr.coef_[0])
+
+    # Calculate the mean and std accuracy across all folds
+    mean_accuracy = np.mean(accuracies)
+    std_accuracy = np.std(accuracies)
+
+    # Calculate mean feature importances
+    mean_feature_importances = np.mean(feature_importances, axis=0)
+    feature_importances_df = pd.DataFrame(
+        mean_feature_importances, index=feature_cols, columns=["importance"]
+    ).sort_values(by="importance", ascending=False)
+
+    return mean_accuracy, std_accuracy, feature_importances_df
 
 
 def mann_whitney_u_test(df, feature_cols, target_col):
@@ -136,9 +143,6 @@ def mann_whitney_u_test(df, feature_cols, target_col):
     return results
 
 
-import os
-
-
 def perform_and_save_analysis(
     df, category_col, target_col, target_col_mapping_dict, feature_cols, output_dir
 ):
@@ -182,17 +186,17 @@ def perform_and_save_analysis(
         print(f"Analyzing category: {category}")
         category_df = df[df[category_col] == category]
 
-        # Prepare data for logistic regression
-        X_train, X_test, y_train, y_test = split_data(
+        # Perform logistic regression with Group K-Fold cross-validation
+        (
+            mean_accuracy,
+            std_accuracy,
+            feature_importances,
+        ) = group_kfold_cross_validate_logistic_regression(
             category_df,
             feature_cols=feature_cols,
             target_col=target_col_encoded,
-            group_split_col="Metadata_line_ID",
-        )
-
-        # Perform logistic regression
-        accuracy, feature_weights = logistic_regression(
-            X_train, y_train, X_test, y_test
+            group_col="Metadata_line_ID",  # your group column here
+            n_splits=5,
         )
 
         # Perform Mann-Whitney U-test
@@ -213,7 +217,8 @@ def perform_and_save_analysis(
         # Store the summary of results, including the significant features
         category_summary = {
             "category": category,
-            "logistic_regression_accuracy": accuracy,
+            "logistic_regression_accuracy_mean": mean_accuracy,
+            "logistic_regression_accuracy_std": std_accuracy,
             "num_significant_features": len(significant_features),
             "significant_features": significant_features_str,
             "full_test_results_file": test_results_file,  # Add the path of the full results file

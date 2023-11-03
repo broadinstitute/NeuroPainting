@@ -32,7 +32,7 @@ def visualize_channels(significant_features):
     plt.show()
 
 
-def load_and_print_results(input_file):
+def visualize_results(input_file):
     """
     Load analysis results from a Parquet file and print them.
     """
@@ -48,7 +48,7 @@ def load_and_print_results(input_file):
     for _, row in results_df.iterrows():
         print(f"\nCategory: {row['category']}")
         print(
-            f"Logistic Regression Accuracy Score: {row['logistic_regression_accuracy']:.4f}"
+            f"Logistic Regression Accuracy Score: {row['logistic_regression_accuracy_mean']:.4f}"
         )
         print(f"Number of Significant Features: {row['num_significant_features']}")
 
@@ -56,3 +56,29 @@ def load_and_print_results(input_file):
             visualize_channels(row["significant_features"])
 
         print(70 * "=")
+
+    sns.scatterplot(
+        data=results_df,
+        x="logistic_regression_accuracy_mean",
+        y="num_significant_features",
+        hue="category",
+        palette="deep",
+        s=100,
+    )
+    # Add error bars
+    for index, row in results_df.iterrows():
+        plt.errorbar(
+            row["logistic_regression_accuracy_mean"],
+            row["num_significant_features"],
+            xerr=row["logistic_regression_accuracy_std"],
+            fmt=".",
+            color="gray",
+            capsize=3,  # Adds caps to the error bars
+        )
+
+    plt.title("Logistic Regression Accuracy vs Number of Significant Features")
+    plt.xlabel("Logistic Regression Accuracy")
+    plt.ylabel("Number of Significant Features")
+
+    # Show the plot
+    plt.show()
