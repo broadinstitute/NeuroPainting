@@ -12,8 +12,9 @@ def visualize_channels(significant_features):
     - significant_features: list, features found to be significant.
 
     Returns:
-    - None, but plots the distribution.
+    - ax: matplotlib.axes._axes.Axes, axes object of the plot.
     """
+
     channel_list = [parse_cp_features(feat)["channel"] for feat in significant_features]
     df_channel = pd.DataFrame(channel_list, columns=["channel"])
     df_channel_count = df_channel.groupby("channel").size().reset_index(name="counts")
@@ -29,13 +30,22 @@ def visualize_channels(significant_features):
     ax = sns.barplot(x="channel", y="percentage", data=df_channel_count)
     ax.set_xticklabels(ax.get_xticklabels(), rotation=40, ha="right")
     plt.tight_layout()
-    plt.show()
+
+    return ax
 
 
-def visualize_results(input_file):
+def visualize_results(input_file, output_dir):
     """
-    Load analysis results from a Parquet file and print them.
+    Visualize the results of the analysis.
+
+    Parameters:
+    - input_file: str, path to the input file.
+    - output_dir: str, path to the output directory.
+
+    Returns:
+    - None, saves the plots to the output directory.
     """
+
     # Load the results
     results_df = pd.read_parquet(input_file)
 
@@ -53,7 +63,10 @@ def visualize_results(input_file):
         print(f"Number of Significant Features: {row['num_significant_features']}")
 
         if row["num_significant_features"] > 0:
-            visualize_channels(row["significant_features"])
+            ax = visualize_channels(row["significant_features"])
+            output_file = f"{output_dir}/significant_features_{row['category']}.png"
+            ax.figure.savefig(output_file)  # save the plot to a file
+            plt.show()  # show the plot
 
         print(70 * "=")
 
@@ -80,5 +93,6 @@ def visualize_results(input_file):
     plt.xlabel("Logistic Regression Accuracy")
     plt.ylabel("Number of Significant Features")
 
-    # Show the plot
+    output_file = f"{output_dir}/classification_vs_significant_features.png"
+    plt.savefig(output_file)
     plt.show()
