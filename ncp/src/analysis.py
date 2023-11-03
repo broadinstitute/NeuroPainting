@@ -134,3 +134,87 @@ def mann_whitney_u_test(df, feature_cols, target_col):
     )
 
     return results
+
+
+import os
+
+
+def perform_and_save_analysis(
+    df, category_col, target_col, target_col_mapping_dict, feature_cols, output_dir
+):
+    """
+    Perform analysis and save results to a Parquet file.
+
+    Parameters:
+    - df: DataFrame, the data.
+    - category_col: str, the name of the column to define categories.
+    - target_col: str, the name of the column to define groups for logistic regression and U-test.
+    - target_col_mapping_dict: dict, a dictionary mapping target_col values to integers.
+    - feature_cols: list, the list of feature columns to use for analysis.
+    - output_dir: str, the directory to save the results to.
+    """
+
+    # Create a directory to store the results if it doesn't exist
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+
+    # Create a DataFrame to store all summary results
+    all_summary_results = pd.DataFrame()
+
+    categories = df[category_col].unique()
+
+    target_col_encoded = f"{target_col}_encoded"
+    df[target_col_encoded] = df[target_col].map(target_col_mapping_dict).fillna(-1)
+
+    for category in categories:
+        print(f"Analyzing category: {category}")
+        category_df = df[df[category_col] == category]
+
+        # Prepare data for logistic regression
+        X_train, X_test, y_train, y_test = split_data(
+            category_df,
+            feature_cols=feature_cols,
+            target_col=target_col_encoded,
+            group_split_col="Metadata_line_ID",
+        )
+
+        # Perform logistic regression
+        score, feature_weights = logistic_regression(X_train, y_train, X_test, y_test)
+
+        # Perform Mann-Whitney U-test
+        test_results = mann_whitney_u_test(
+            category_df, feature_cols=feature_cols, target_col=target_col_encoded
+        )
+
+        # Save the full test results to a Parquet file within the specified directory
+        test_results_file = os.path.join(output_dir, f"test_results_{category}.parquet")
+        test_results.to_parquet(test_results_file)
+
+        # Filter for significant features
+        significant_features = test_results.query("q_value < 0.05")["feature"].tolist()
+
+        # Convert the list of significant features to a string for saving
+        significant_features_str = ",".join(significant_features)
+
+        # Store the summary of results, including the significant features
+        category_summary = {
+            "category": category,
+            "logistic_regression_score": score,
+            "num_significant_features": len(significant_features),
+            "significant_features": significant_features_str,
+            "full_test_results_file": test_results_file,  # Add the path of the full results file
+        }
+
+        # Convert to DataFrame
+        category_summary_df = pd.DataFrame([category_summary])
+
+        # Append to all summary results
+        all_summary_results = pd.concat(
+            [all_summary_results, category_summary_df], ignore_index=True
+        )
+
+    # Save all summary results to a Parquet file
+    summary_results_file = os.path.join(output_dir, "summary_results.parquet")
+    all_summary_results.to_parquet(summary_results_file)
+
+    print(f"Analysis complete. Summary results saved to {summary_results_file}")

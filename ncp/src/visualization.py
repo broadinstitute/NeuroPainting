@@ -30,3 +30,29 @@ def visualize_channels(significant_features):
     ax.set_xticklabels(ax.get_xticklabels(), rotation=40, ha="right")
     plt.tight_layout()
     plt.show()
+
+
+def load_and_print_results(input_file):
+    """
+    Load analysis results from a Parquet file and print them.
+    """
+    # Load the results
+    results_df = pd.read_parquet(input_file)
+
+    # Convert the significant_features back to lists from strings
+    results_df["significant_features"] = results_df["significant_features"].apply(
+        lambda x: x.split(",") if pd.notnull(x) else []
+    )
+
+    # Print the results
+    for _, row in results_df.iterrows():
+        print(f"\nCategory: {row['category']}")
+        print(
+            f"Logistic Regression Accuracy Score: {row['logistic_regression_score']:.4f}"
+        )
+        print(f"Number of Significant Features: {row['num_significant_features']}")
+
+        if row["num_significant_features"] > 0:
+            visualize_channels(row["significant_features"])
+
+        print(70 * "=")
