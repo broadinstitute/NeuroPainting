@@ -55,7 +55,7 @@ def logistic_regression(X_train, y_train, X_test, y_test):
     - y_train, y_test: Series, the training and test target data.
 
     Returns:
-    - score: float, the accuracy of the model.
+    - accuracy: float, the accuracy of the model.
     - feature_weights: DataFrame, weights of each feature.
     """
 
@@ -69,7 +69,7 @@ def logistic_regression(X_train, y_train, X_test, y_test):
     pipeline.fit(X_train, y_train)
 
     # Predict on the test data and calculate accuracy score using the pipeline
-    score = pipeline.score(X_test, y_test)
+    accuracy = pipeline.score(X_test, y_test)
 
     # Extract the trained logistic regression model from the pipeline
     logisticRegr = pipeline.named_steps["logisticregression"]
@@ -81,7 +81,7 @@ def logistic_regression(X_train, y_train, X_test, y_test):
         index=X_train.columns,  # Use the DataFrame's columns as the index for feature names
     ).sort_values(by="weight", ascending=False)
 
-    return score, feature_weights
+    return accuracy, feature_weights
 
 
 from scipy import stats as ss
@@ -164,7 +164,19 @@ def perform_and_save_analysis(
     categories = df[category_col].unique()
 
     target_col_encoded = f"{target_col}_encoded"
-    df[target_col_encoded] = df[target_col].map(target_col_mapping_dict).fillna(-1)
+
+    # Attempt to map the target_col values using the provided dictionary
+    df[target_col_encoded] = df[target_col].map(target_col_mapping_dict)
+
+    # Check if there are any NA values after mapping
+    if df[target_col_encoded].isna().any():
+        # Identify the values in target_col that were not mapped
+        unmapped_values = df.loc[df[target_col_encoded].isna(), target_col].unique()
+        print(
+            f"WARNING: The following values in {target_col} were not mapped and will be excluded from the analysis: {unmapped_values}"
+        )
+        # Drop the rows with unmapped values
+        df = df.dropna(subset=[target_col_encoded])
 
     for category in categories:
         print(f"Analyzing category: {category}")
@@ -179,7 +191,9 @@ def perform_and_save_analysis(
         )
 
         # Perform logistic regression
-        score, feature_weights = logistic_regression(X_train, y_train, X_test, y_test)
+        accuracy, feature_weights = logistic_regression(
+            X_train, y_train, X_test, y_test
+        )
 
         # Perform Mann-Whitney U-test
         test_results = mann_whitney_u_test(
@@ -199,7 +213,7 @@ def perform_and_save_analysis(
         # Store the summary of results, including the significant features
         category_summary = {
             "category": category,
-            "logistic_regression_score": score,
+            "logistic_regression_accuracy": accuracy,
             "num_significant_features": len(significant_features),
             "significant_features": significant_features_str,
             "full_test_results_file": test_results_file,  # Add the path of the full results file

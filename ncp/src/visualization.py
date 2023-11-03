@@ -48,7 +48,7 @@ def load_and_print_results(input_file):
     for _, row in results_df.iterrows():
         print(f"\nCategory: {row['category']}")
         print(
-            f"Logistic Regression Accuracy Score: {row['logistic_regression_score']:.4f}"
+            f"Logistic Regression Accuracy Score: {row['logistic_regression_accuracy']:.4f}"
         )
         print(f"Number of Significant Features: {row['num_significant_features']}")
 
