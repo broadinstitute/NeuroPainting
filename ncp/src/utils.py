@@ -5,7 +5,7 @@ from analysis import perform_and_save_analysis
 from visualization import visualize_results
 
 
-def run_analysis(data_level):
+def run_analysis(data_level, feature_cols_pattern="Cells_|Cytoplasm_|Nuclei_"):
     data_path = f"output/processed/{data_level}/combined.parquet"
 
     df = pd.read_parquet(data_path)
@@ -13,7 +13,7 @@ def run_analysis(data_level):
     # select only rows where the Metadata_line_source is "human"
     df = df.query("Metadata_line_source == 'human'")
     feature_cols = df.columns[
-        df.columns.str.contains("Cells_|Cytoplasm_|Nuclei_")
+        df.columns.str.contains(feature_cols_pattern, regex=True)
     ].tolist()
 
     cols_to_drop_stem_cell = [
@@ -64,7 +64,7 @@ def run_analysis(data_level):
         output_dir = f"output/analysis_results/{data_level}/cell_type_a_vs_b/{cell_type_0}_vs_{cell_type_1}/"
 
         perform_and_save_analysis(
-            df=df.drop(columns=cols_to_drop),
+            df=df.drop(columns=cols_to_drop, errors="ignore"),
             category_col="Metadata_line_condition",
             target_col="Metadata_cell_type",
             target_col_mapping_dict=target_col_mapping_dict,
