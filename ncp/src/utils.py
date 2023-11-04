@@ -5,6 +5,35 @@ from analysis import perform_and_save_analysis
 from visualization import visualize_results
 
 
+def apply_function_to_groups(df, group_col, func, *args, **kwargs):
+    """
+    Applies a function to subsets of a DataFrame grouped by a specified column.
+
+    Parameters:
+    - df: pandas.DataFrame, the input DataFrame.
+    - group_col: str, the name of the column to group by.
+    - func: callable, the function to apply to each group.
+    - *args: arguments passed to the function.
+    - **kwargs: keyword arguments passed to the function.
+
+    Returns:
+    - pandas.DataFrame, the concatenated results after applying the function to each group.
+    """
+    # Placeholder for the results
+    results = []
+
+    # Iterate over each group
+    for group_value, group_df in df.groupby(group_col):
+        # Apply the function to the group
+        result = func(group_df, *args, **kwargs)
+        # Add a column to track the group value if necessary
+        result[group_col] = group_value
+        results.append(result)
+
+    # Concatenate all results into one DataFrame
+    return pd.concat(results, ignore_index=True)
+
+
 def run_analysis(data_level, feature_cols_pattern="Cells_|Cytoplasm_|Nuclei_"):
     data_path = f"output/processed/{data_level}/combined.parquet"
 
