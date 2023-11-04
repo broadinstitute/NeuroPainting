@@ -38,4 +38,4 @@ rsconnect/
 *.ipynb_checkpoints
 .DS_Store
 **/__pycache__/*
-5.reanalysis/output/analysis_results/**/*.parquet
+5.reanalysis/output/analysis_results/augmented/*.parquet
