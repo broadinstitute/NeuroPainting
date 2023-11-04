@@ -34,7 +34,11 @@ def apply_function_to_groups(df, group_col, func, *args, **kwargs):
     return pd.concat(results, ignore_index=True)
 
 
-def run_analysis(data_level, feature_cols_pattern="Cells_|Cytoplasm_|Nuclei_"):
+def run_analysis(
+    data_level,
+    feature_cols_pattern="Cells_|Cytoplasm_|Nuclei_",
+    random_subset_features=False,
+):
     data_path = f"output/processed/{data_level}/combined.parquet"
 
     df = pd.read_parquet(data_path)
@@ -51,12 +55,14 @@ def run_analysis(data_level, feature_cols_pattern="Cells_|Cytoplasm_|Nuclei_"):
         "Nuclei_ObjectSkeleton_TotalObjectSkeletonLength_CellImageSkel",
     ]
 
-    # HACK to reduce the number of features
-    import random
+    if random_subset_features:
+        import random
 
-    random.seed(42)
-    random.shuffle(feature_cols)
-    feature_cols = feature_cols[:30]
+        print("WARNING: Randomly selecting 30 features")
+
+        random.seed(42)
+        random.shuffle(feature_cols)
+        feature_cols = feature_cols[:30]
 
     # ------------------------------------------------------------
     # Control vs Deletion, per cell type
