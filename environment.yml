@@ -23,4 +23,5 @@ dependencies:
   - pip:
       - git+https://github.com/cytomining/pycytominer@v1.0.0
       - git+https://github.com/cytomining/cytominer-database@v0.3.4
+      - git+https://github.com/cytomining/copairs@v0.3.0
   #     - git+https://github.com/cytomining/cytominer-eval@f7f5b293da54d870e8ba86bacf7dbc874bb79565
