@@ -89,6 +89,7 @@ def visualize_results(input_file, output_dir):
             capsize=3,  # Adds caps to the error bars
         )
 
+    plt.xlim(0.5, 1)
     plt.title("Logistic Regression Accuracy vs Number of Significant Features")
     plt.xlabel("Logistic Regression Accuracy")
     plt.ylabel("Number of Significant Features")
