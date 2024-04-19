@@ -14,6 +14,14 @@ files = [
         Path("~/Documents/GitHub/jump-profiling-recipe/outputs/stem_public/profiles_var_mad_int.parquet").expanduser(),
         Path("output/processed/var_mad_int/combined.parquet").expanduser(),
     ),
+    (
+        Path("~/Documents/GitHub/jump-profiling-recipe/outputs/stem/metrics/profiles_var_mad_int_featselect_ap_nonrep.parquet").expanduser(),
+        Path("output/analysis_results/var_mad_int_featselect/metrics/ap_nonrep.parquet").expanduser(),
+    ),
+    (
+        Path("~/Documents/GitHub/jump-profiling-recipe/outputs/stem/metrics/profiles_var_mad_int_featselect_map_nonrep.parquet").expanduser(),
+        Path("output/analysis_results/var_mad_int_featselect/metrics/map_nonrep.parquet").expanduser(),
+    )
 ]
 
 # Copy and rename files
