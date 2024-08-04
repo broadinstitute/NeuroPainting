@@ -1,0 +1,1 @@
+NCP_2022_03_03_METADATA.txt was intentionally duplicated as BR00132673.txt and BR00132672.txt to make it easier to reuse  https://github.com/broadinstitute/neuronal-cell-painting/blob/master/1.run-workflows/3.select_images_to_print.Rmd
