@@ -1,0 +1,1 @@
+2022-08-07_batch_METADATA.txt was intentionally duplicated as PE_PP_Plate2.txt and Plate1_PE_PP96.txt to make it easier to reuse  https://github.com/broadinstitute/neuronal-cell-painting/blob/master/1.run-workflows/3.select_images_to_print.Rmd
