@@ -21,7 +21,7 @@ load_data <-
     recursive = T
   )  %>%
   map_df(function(filename) {
-    df <- read_csv(filename)
+    df <- read_csv(filename, show_col_types = FALSE)
     df <- df %>% mutate(Metadata_Batch = str_split(filename, "/")[[1]][2])
   })
 
@@ -59,9 +59,11 @@ datasets <-
   tribble(
     ~batch, ~plate,
     "NCP_STEM_1", "BR_NCP_STEM_1",
-    "NCP_PROGENITORS_1", "BR_NCP_PROGENITORS_1",
-    "NCP_PILOT_3", "BR_NCP_PILOT_3",
-    "NCP_PILOT_3B", "MAtt_ICC_test"
+    "NCP_PROGENITORS_1", "BR00127194",
+    "2022_03_03_NCP_NEURONS_2_20x", "BR00132672",
+    "2022_03_03_NCP_NEURONS_2_20x", "BR00132673",
+    "2022-08-07_batch", "Plate1_PE_PP96",
+    "2022-08-07_batch", "PE_PP_Plate2"
   )
 
 metadata <-
@@ -70,6 +72,7 @@ metadata <-
           function(batch, plate) {
             read_tsv(
               file.path("metadata", glue("{batch}/platemap/{plate}.txt")),
+              show_col_types = FALSE
             ) %>%
               mutate(Batch = batch) %>%
               distinct()
@@ -96,7 +99,7 @@ set.seed(5)
 
 metadata_sampled <-
   metadata %>%
-  group_by(Metadata_Batch, Metadata_line_ID, Metadata_line_condition, Metadata_compound_ID, Metadata_plating_density) %>%
+  group_by(Metadata_Batch, Metadata_line_ID, Metadata_line_condition, Metadata_plating_density) %>%
   sample_n(1) %>%
   ungroup()
 ```
@@ -115,7 +118,7 @@ filenames_header <- paste0("FileName_Orig", channels)
 images <- 
   load_data %>%
   select(Metadata_Batch, Metadata_Plate, Metadata_Well, Metadata_Row, Metadata_FieldID, matches("^URL_"), one_of(filenames_header)) %>%
-  inner_join(metadata_sampled, by = c("Metadata_Plate", "Metadata_Well")) %>%
+  inner_join(metadata_sampled, by = c("Metadata_Batch", "Metadata_Plate", "Metadata_Well")) %>%
   filter(Metadata_FieldID %in% fieldIDs) %>%
   select(matches("^Metadata"), matches("^URL"), matches("^FileName_Orig"))
 
@@ -136,6 +139,20 @@ images %>%
   select(matches("^Metadata"),  matches("^FileName_Orig")) %>%
   write_csv("data/sample_images_metadata.csv")
 ```
+
+```{r}
+images %>% 
+  distinct(Metadata_Batch, Metadata_Plate, Metadata_Well, Metadata_line_ID, Metadata_line_condition, Metadata_plating_density) %>% 
+  group_by(Metadata_Batch, Metadata_Plate, Metadata_line_ID, Metadata_line_condition, Metadata_plating_density) %>% 
+  tally() %>%
+  group_by(n) %>%
+  tally(name = "n_unique_conditions")
+```
+
+```{r}
+metadata_sampled %>% count()
+```
+
 
 Run this on command line to download the images:
 
@@ -176,11 +193,11 @@ E.g. if the pipeline was configured differently, we'd have different values in `
 
 Only `NCP_PILOT_3B` and `NCP_PILOT_1` have 3 planes
 
-```{r}
+```{r eval=FALSE}
 load_data %>% distinct(Metadata_Batch, Metadata_PlaneID) %>% filter(Metadata_PlaneID > 1)
 ```
 
-```{r}
+```{r eval=FALSE}
 plane_batch <-
   tribble(~Metadata_Batch, ~ Metadata_PlaneID_outline,
            "NCP_PILOT_3B", 3,
@@ -224,7 +241,7 @@ outline_images %>%
   write_csv("data/sample_images_outline.csv")
 ```
 
-```{r results='asis'}
+```{r eval=FALSE, results='asis'}
 outline_images %>%
   mutate(URL_Outline = str_c("[Outline](", URL_Outline, ")")) %>% 
   select(Metadata_Batch, Metadata_plating_density, Metadata_line_condition, Metadata_compound_ID, URL_Outline, everything()) %>%
