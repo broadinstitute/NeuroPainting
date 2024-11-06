@@ -34,8 +34,8 @@ platemap <- "BR_NCP_STEM_1"
 
 plate_id <- "BR_NCP_STEM_1"
 
-profiles <- 
-  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, "_normalized_variable_selected.csv.gz")), 
+profiles <-
+  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, "_normalized_variable_selected.csv.gz")),
            progress = FALSE)
 ```
 
@@ -57,7 +57,7 @@ tribble(~profile_type, ~feature_space,
 ```
 
 ```{r}
-profiles %>% select(matches("Metadata_")) %>% 
+profiles %>% select(matches("Metadata_")) %>%
   head()
 ```
 
@@ -76,9 +76,9 @@ metadata %<>%
   Metadata_line_ID = line_ID) %>%
   mutate(
     Metadata_Plate = "BR_NCP_STEM_1"
-  ) 
+  )
 
-metadata %>% 
+metadata %>%
   group_by(Metadata_line_ID) %>%
   tally()
 ```
@@ -86,7 +86,7 @@ metadata %>%
 Report based on profiles (should be identical)
 
 ```{r}
-replicates_per_line <- 
+replicates_per_line <-
   profiles %>%
   group_by(Metadata_Plate, Metadata_line_ID) %>%
   tally()
@@ -113,21 +113,21 @@ for (profile_type_i in c("")) {
       profile_type_i = profile_type_i
     )
   )
-  
+
   audit_detailed <- read_csv(
     glue(
       file.path(audit_dir, batch_id, "{platemap}_audit{profile_type_i}_detailed.csv"),
       profile_type_i = profile_type_i
     )
   )
-  
-  audit_detailed_all <- 
+
+  audit_detailed_all <-
     bind_rows(audit_detailed_all,
               audit_detailed %>% mutate(profile_type = profile_type_i))
-  audit_all <- 
+  audit_all <-
     bind_rows(audit_all,
               audit %>% mutate(profile_type = profile_type_i))
-  
+
 }
 
 p <-
@@ -146,10 +146,10 @@ print(p)
 
 dir.create("figures", showWarnings = FALSE)
 
-ggsave(file.path("figures", 
-                 glue("{plate_id}_replicate_correlation.png")), 
+ggsave(file.path("figures",
+                 glue("{plate_id}_replicate_correlation.png")),
        p, width = 8, height = 8)
-  
+
 ```
 
 ## Is cell plating density correlated with the order of plating a cell line?
@@ -187,7 +187,7 @@ cell_count %<>%
     metadata,
     by = c("Metadata_Plate", "Metadata_Well")
   )
-  
+
 p <-
   plot_plate(
     cell_count %>%
@@ -205,16 +205,16 @@ ggsave(out_file, p, height = 4, width = 6)
 
 ### Plot cell count vs cell id
 
-The cell line id corresponds to the order in which the cells were plated. 
+The cell line id corresponds to the order in which the cells were plated.
 We suspected that a longer settling time (i.e. smaller value of cell line id) was resulting in higher cell count.
 
 ```{r}
-p <- 
-  ggplot(cell_count, 
-         aes(Metadata_line_ID, Count_Cells)) + 
-  geom_boxplot(aes(as.factor(Metadata_line_ID), Count_Cells)) + 
+p <-
+  ggplot(cell_count,
+         aes(Metadata_line_ID, Count_Cells)) +
+  geom_boxplot(aes(as.factor(Metadata_line_ID), Count_Cells)) +
   geom_smooth(method = "lm") +
-  xlab("cell line") + 
+  xlab("cell line") +
   ylab("cell count") +
   ggtitle(glue("Relationship between cell line id and cell count ({plate_id})"),
           subtitle = sprintf("Pearson correlation = %.2f",
@@ -224,8 +224,8 @@ p <-
 
 p
 
-ggsave(file.path("figures", 
-                 glue("{plate_id}_cell_counts_across_replicates.png")), 
+ggsave(file.path("figures",
+                 glue("{plate_id}_cell_counts_across_replicates.png")),
        p, width = 8, height = 5)
 ```
 
@@ -249,10 +249,10 @@ df <-
 ### Is median replicate correlation correlated with cell id?
 
 ```{r}
-cor_df <- 
+cor_df <-
   audit_detailed_all %>%
   group_by(profile_type) %>%
-  summarize(corval = cor(correlation, Metadata_line_ID), .groups = "keep") 
+  summarize(corval = cor(correlation, Metadata_line_ID), .groups = "keep")
 
 p <-
   ggplot(audit_detailed_all,
@@ -268,8 +268,8 @@ p <-
 
 p
 
-ggsave(file.path("figures", 
-                 glue("{plate_id}_cell_lines_vs_replicate_correlation.png")), 
+ggsave(file.path("figures",
+                 glue("{plate_id}_cell_lines_vs_replicate_correlation.png")),
        p, width = 8, height = 5)
 ```
 
@@ -277,7 +277,7 @@ ggsave(file.path("figures",
 ### Is median replicate correlation correlated with cell count?
 
 ```{r}
-cor_df <- 
+cor_df <-
   df %>%
   group_by(profile_type) %>%
   summarize(corval = cor(Count_Cells, correlation), .groups = "keep")
@@ -296,8 +296,8 @@ p <-
 
 p
 
-ggsave(file.path("figures", 
-                 glue("{plate_id}_cell_count_vs_replicate_correlation.png")), 
+ggsave(file.path("figures",
+                 glue("{plate_id}_cell_count_vs_replicate_correlation.png")),
        p, width = 8, height = 5)
 
 ```
@@ -307,16 +307,16 @@ ggsave(file.path("figures",
 ```{r}
 create_augmented_profiles <- function(profiles, profile_type_i) {
   augmented_profiles_i <-
-    profiles %>% 
+    profiles %>%
     inner_join(df %>% filter(profile_type == profile_type_i),
                c("Metadata_Plate_Map_Name", "Metadata_plating_density", "Metadata_line_ID")) %>%
     rename(Metadata_correlation = correlation,
            Metadata_Count_Cells = Count_Cells) %>%
     select(matches("^Metadata_"), everything())
-  
+
   augmented_profiles_i %>%
    write_csv(file.path("profiles", glue("{plate_id}{profile_type_i}_normalized_variable_selected_augmented.csv.gz")))
-  
+
   augmented_profiles_i
 }
 
@@ -351,7 +351,7 @@ plot_replicate_correlations_platemap <- function(augmented_profiles_i, profile_t
     ) +
     theme_dark() +
     scale_fill_continuous()
-  
+
   print(p)
 }
 
@@ -366,9 +366,9 @@ plot_replicate_correlations_platemap(augmented_profiles, "")
 ```{r}
 aggregate_profiles <- function(profiles) {
   variables <- str_subset(names(profiles), cp_column_match)
-  
+
   profiles %<>%
-    simple_aggregate(variables = variables, 
+    simple_aggregate(variables = variables,
                          strata = c("Metadata_line_ID", "Metadata_plating_density"),
                          operation = "median")
 }
@@ -376,10 +376,10 @@ aggregate_profiles <- function(profiles) {
 profiles %<>% aggregate_profiles()
 
 cell_count %<>%
-  simple_aggregate(variables = c("Count_Cells"), 
+  simple_aggregate(variables = c("Count_Cells"),
                        strata = c("Metadata_line_ID", "Metadata_plating_density"),
                        operation = "median")
-  
+
 ```
 
 ### Measure similarity between profiles
@@ -390,42 +390,42 @@ measure_profile_similarity <- function(profiles) {
   data_matrix <-
     profiles %>%
     select(-matches("Metadata"))
-  
+
   # get metadata
   metadata <-
     profiles %>%
     select(matches("Metadata")) %>%
     rowid_to_column(var = "id")
-  
+
   # measure similarities between treatments
-  similarity_i <- cor(t(data_matrix)) 
-  
+  similarity_i <- cor(t(data_matrix))
+
   colnames(similarity_i) <- seq(1, ncol(similarity_i))
-  
-  similarity_i %<>% 
-    as_tibble() %>% 
-    rowid_to_column(var = "id1") %>% 
-    gather(id2, correlation, -id1) %>% 
+
+  similarity_i %<>%
+    as_tibble() %>%
+    rowid_to_column(var = "id1") %>%
+    gather(id2, correlation, -id1) %>%
     mutate(id2 = as.integer(id2)) %>%
-    filter(id1 > id2) %>% 
+    filter(id1 > id2) %>%
     arrange(desc(correlation))
-  
+
   # annotate the similarities data frame
   similarity_i %<>%
-    inner_join(metadata %>% 
-                 select(id, 
+    inner_join(metadata %>%
+                 select(id,
                         Metadata_line_ID,
-                        Metadata_plating_density), 
-               by = c("id1" = "id")) %>% 
-    rename(Metadata_line_ID1 = Metadata_line_ID, 
+                        Metadata_plating_density),
+               by = c("id1" = "id")) %>%
+    rename(Metadata_line_ID1 = Metadata_line_ID,
            Metadata_plating_density1 = Metadata_plating_density)  %>%
-    inner_join(metadata %>% 
-                 select(id, 
+    inner_join(metadata %>%
+                 select(id,
                         Metadata_line_ID,
-                        Metadata_plating_density), 
+                        Metadata_plating_density),
                by = c("id2" = "id")) %>%
-    rename(Metadata_line_ID2 = Metadata_line_ID, 
-           Metadata_plating_density2 = Metadata_plating_density) %>% 
+    rename(Metadata_line_ID2 = Metadata_line_ID,
+           Metadata_plating_density2 = Metadata_plating_density) %>%
     arrange(desc(correlation))
 }
 
@@ -436,21 +436,21 @@ similarity_all <- measure_profile_similarity(profiles)
 
 ```{r}
 attach_cell_count <- function(similarity_i) {
-  similarity_i %>% 
+  similarity_i %>%
     inner_join(cell_count,
-               by = c("Metadata_line_ID1" = "Metadata_line_ID", 
+               by = c("Metadata_line_ID1" = "Metadata_line_ID",
                       "Metadata_plating_density1" = "Metadata_plating_density")
                ) %>%
     rename(Count_Cells1 = Count_Cells) %>%
     inner_join(cell_count,
-               by = c("Metadata_line_ID2" = "Metadata_line_ID", 
+               by = c("Metadata_line_ID2" = "Metadata_line_ID",
                       "Metadata_plating_density2" = "Metadata_plating_density")
                ) %>%
     rename(Count_Cells2 = Count_Cells) %>%
     mutate(cell_count_abs_diff = abs(Count_Cells1 - Count_Cells2)) %>%
     mutate(cell_count_sum = (Count_Cells1 + Count_Cells2))
-    
-} 
+
+}
 
 similarity_all %<>% attach_cell_count()
 
@@ -459,7 +459,7 @@ similarity_all %<>% attach_cell_count()
 
 ### Report relationship between profiles similarity and cell count similarity
 
-```{r} 
+```{r}
 plot_and_save_similarities <- function(similarity, profile_type) {
   p <-
     ggplot(similarity, aes(correlation, cell_count_abs_diff, color = cell_count_sum)) +
@@ -472,20 +472,20 @@ plot_and_save_similarities <- function(similarity, profile_type) {
                                with(similarity, cor(correlation, cell_count_abs_diff))
                                )
             )
-  
+
   print(p)
-  
-  ggsave(file.path("figures", 
-                   glue("{plate_id}_profiles_similarity_vs_cell_count_similarity_{profile_type}.png")), 
+
+  ggsave(file.path("figures",
+                   glue("{plate_id}_profiles_similarity_vs_cell_count_similarity_{profile_type}.png")),
          p, width = 7, height = 5)
-  
+
   similarity %>% write_csv(file.path("data", glue("NCP_STEM_1_similarity_{profile_type}.csv")))
 }
 ```
 
 Report for all cell lines
 
-```{r} 
+```{r}
 dir.create("data", showWarnings = FALSE)
 
 plot_and_save_similarities(similarity = similarity_all, profile_type = "all")
@@ -494,9 +494,9 @@ plot_and_save_similarities(similarity = similarity_all, profile_type = "all")
 
 Report for cell lines after filtering out those that have too few or too many cells
 
-```{r} 
+```{r}
 filter_cell_lines <- function(similarity_i) {
-  
+
   similarity_i %>%
     filter(between(Count_Cells1, 1000, 4000)) %>%
     filter(between(Count_Cells2, 1000, 4000))
@@ -505,4 +505,3 @@ filter_cell_lines <- function(similarity_i) {
 
 plot_and_save_similarities(similarity = filter_cell_lines(similarity_all), profile_type = "all_filtered")
 ```
-

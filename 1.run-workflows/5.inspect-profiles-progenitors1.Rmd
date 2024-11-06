@@ -24,8 +24,8 @@ platemap <- "BR_NCP_PROGENITORS_1"
 
 plate_id <- "BR_NCP_PROGENITORS_1"
 
-profiles <- 
-  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, ".csv.gz")), 
+profiles <-
+  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, ".csv.gz")),
            progress = FALSE)
 ```
 
@@ -37,8 +37,8 @@ platemap <- "BR_NCP_PROGENITORS_1"
 
 plate_id <- "BR_NCP_PROGENITORS_1"
 
-profiles_branching <- 
-  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, ".csv.gz")), 
+profiles_branching <-
+  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, ".csv.gz")),
            progress = FALSE)
 ```
 
@@ -65,4 +65,3 @@ tribble(~profile_type, ~feature_space,
 ```{r rows.print=25}
 tibble(variables = variables_branching)
 ```
-

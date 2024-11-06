@@ -22,8 +22,8 @@ platemap <- "MAtt_ICC_test"
 
 plate_id <- "MAtt_ICC_test"
 
-profiles_map2 <- 
-  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, "_augmented.csv.gz")), 
+profiles_map2 <-
+  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, "_augmented.csv.gz")),
            progress = FALSE)
 ```
 
@@ -34,27 +34,27 @@ platemap <- "BR_NCP_PILOT_3"
 
 plate_id <- "BR_NCP_PILOT_3"
 
-profiles_cp <- 
-  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, "_augmented.csv.gz")), 
+profiles_cp <-
+  read_csv(file.path("profiles", batch_id, plate_id, paste0(plate_id, "_augmented.csv.gz")),
            progress = FALSE)
 ```
 
 
 ```{r}
-shorten_skel_feature_name <- function(s) 
-  s %>% 
-  str_remove("Nuclei_ObjectSkeleton_") %>% 
+shorten_skel_feature_name <- function(s)
+  s %>%
+  str_remove("Nuclei_ObjectSkeleton_") %>%
   str_remove("_CellBodiesPlusNeuritesSkel") %>%
   str_replace("Nuclei_Number_Object_Number", "NumCells") %>%
   str_replace("Number", "Num")
 
-get_skel_features <- function(profiles) 
-  profiles %>% 
-  select(matches("Metadata_|Skel$|^Nuclei_Number_Object_Number$")) %>% 
+get_skel_features <- function(profiles)
+  profiles %>%
+  select(matches("Metadata_|Skel$|^Nuclei_Number_Object_Number$")) %>%
   select(-matches("_mito_skel$")) %>%
   rename_with(shorten_skel_feature_name)
 
-count_wells <- function(profiles) 
+count_wells <- function(profiles)
   profiles %>% group_by(across(matches("plating_density|line_condition|compound_ID"))) %>% tally()
 ```
 
@@ -62,7 +62,7 @@ count_wells <- function(profiles)
 
 ## Global
 
-### Counts 
+### Counts
 
 Count wells per unique perturbations
 
@@ -107,20 +107,20 @@ skel_cp %>%
 
 ```{r}
 variables <- names(skel_cp) %>% str_subset("Metadata_", negate = TRUE)
-skel_cp %>% 
-  cytominer::mark_outlier_rows(variables, skel_cp) %>% 
+skel_cp %>%
+  cytominer::mark_outlier_rows(variables, skel_cp) %>%
   filter(!is_outlier) %>%
   select(-is_outlier) %>%
   pivot_longer(-matches("Metadata")) %>%
   ggplot(aes(value)) + geom_histogram(bins = 50) + facet_wrap(~name, scales = "free")
-  
+
 ```
 ```{r}
-skel_cp <- 
-  skel_cp %>% 
-  cytominer::mark_outlier_rows(variables, skel_cp) %>% 
+skel_cp <-
+  skel_cp %>%
+  cytominer::mark_outlier_rows(variables, skel_cp) %>%
   filter(!is_outlier) %>%
-  select(-is_outlier) 
+  select(-is_outlier)
 
 skel_cp %>%
   count()
@@ -133,33 +133,33 @@ skel_cp %>%
 ```{r fig.height=7, fig.width=5}
 skel_map2 %>%
   pivot_longer(-matches("Metadata")) %>%
-  ggplot(aes(Metadata_line_condition, value)) + geom_boxplot() + 
+  ggplot(aes(Metadata_line_condition, value)) + geom_boxplot() +
   facet_grid(name~Metadata_plating_density, scales = "free")
 ```
 
 ```{r fig.height=10, fig.width=7}
 skel_cp %>%
   pivot_longer(-matches("Metadata")) %>%
-  ggplot(aes(Metadata_compound_ID, value, fill=Metadata_line_condition)) + 
-  geom_boxplot() + 
-  facet_grid(name~Metadata_plating_density, scales = "free") + 
+  ggplot(aes(Metadata_compound_ID, value, fill=Metadata_line_condition)) +
+  geom_boxplot() +
+  facet_grid(name~Metadata_plating_density, scales = "free") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(legend.position="bottom")
 ```
 
 
 ```{r}
-skel_cp <- 
-  skel_cp %>% 
+skel_cp <-
+  skel_cp %>%
   select(
-    any_of(c("Metadata_plating_density", "Metadata_line_condition", "Metadata_compound_ID")), 
+    any_of(c("Metadata_plating_density", "Metadata_line_condition", "Metadata_compound_ID")),
     all_of(variables)) %>%
   mutate(Metadata_compound_ID = replace_na(Metadata_compound_ID, "Untreated_CP"))
 
-skel_map2 <- 
-  skel_map2 %>% 
+skel_map2 <-
+  skel_map2 %>%
   select(
-    any_of(c("Metadata_plating_density", "Metadata_line_condition", "Metadata_compound_ID")), 
+    any_of(c("Metadata_plating_density", "Metadata_line_condition", "Metadata_compound_ID")),
     all_of(variables)) %>%
   mutate(Metadata_compound_ID = "Untreated_MAP2") %>%
   select(matches("Metadata"), everything())
@@ -173,24 +173,24 @@ skel <-
 ```{r fig.height=10, fig.width=7}
 skel %>%
   pivot_longer(-matches("Metadata")) %>%
-  ggplot(aes(Metadata_compound_ID, value, fill=Metadata_line_condition)) + 
-  geom_boxplot() + 
-  facet_grid(name~Metadata_plating_density, scales = "free") + 
+  ggplot(aes(Metadata_compound_ID, value, fill=Metadata_line_condition)) +
+  geom_boxplot() +
+  facet_grid(name~Metadata_plating_density, scales = "free") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(legend.position="bottom") +
-  ggtitle("Branching metrics from Cell Painting and MAP2 images", 
+  ggtitle("Branching metrics from Cell Painting and MAP2 images",
           subtitle = "All compounds are from Cell Painting images")
 ```
 ```{r fig.height=10, fig.width=7}
 skel %>%
   pivot_longer(-matches("Metadata")) %>%
   filter(str_detect(Metadata_compound_ID, "Untreated")) %>%
-  ggplot(aes(Metadata_compound_ID, value, fill=Metadata_line_condition)) + 
-  geom_boxplot() + 
-  facet_grid(name~Metadata_plating_density, scales = "free") + 
+  ggplot(aes(Metadata_compound_ID, value, fill=Metadata_line_condition)) +
+  geom_boxplot() +
+  facet_grid(name~Metadata_plating_density, scales = "free") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(legend.position="bottom") +
-  ggtitle("Branching metrics from Cell Painting and MAP2 images", 
+  ggtitle("Branching metrics from Cell Painting and MAP2 images",
           subtitle = "Only untreated wells")
 ```
 
@@ -199,35 +199,35 @@ skel %>%
 skel %>%
   pivot_longer(-matches("Metadata")) %>%
   filter(str_detect(Metadata_compound_ID, "Untreated")) %>%
-  ggplot(aes(as.factor(Metadata_plating_density), value, fill=Metadata_compound_ID)) + 
-  geom_boxplot() + 
-  facet_grid(name~Metadata_line_condition, scales = "free") + 
+  ggplot(aes(as.factor(Metadata_plating_density), value, fill=Metadata_compound_ID)) +
+  geom_boxplot() +
+  facet_grid(name~Metadata_line_condition, scales = "free") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(legend.position="bottom") +
-  ggtitle("Branching metrics from Cell Painting and MAP2 images", 
+  ggtitle("Branching metrics from Cell Painting and MAP2 images",
           subtitle = "Only untreated wells")
 ```
 ```{r fig.height=6, fig.width=6}
 skel %>%
   filter(str_detect(Metadata_compound_ID, "Untreated")) %>%
-  ggplot(aes(NumNonTrunkBranches, NumBranchEnds, color = Metadata_compound_ID)) + 
-  geom_point() + 
+  ggplot(aes(NumNonTrunkBranches, NumBranchEnds, color = Metadata_compound_ID)) +
+  geom_point() +
   geom_abline(slope = 1, alpha = 0.5) +
-  facet_grid(Metadata_plating_density ~ Metadata_compound_ID + Metadata_line_condition) + 
+  facet_grid(Metadata_plating_density ~ Metadata_compound_ID + Metadata_line_condition) +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(legend.position="bottom") +
   coord_equal() +
-  ggtitle("Branch ends vs Non-trunck branches from Cell Painting and MAP2 images", 
+  ggtitle("Branch ends vs Non-trunck branches from Cell Painting and MAP2 images",
           subtitle = "Only untreated wells")
 ```
 ```{r fig.height=7, fig.width=7}
 skel %>%
   filter(str_detect(Metadata_compound_ID, "Untreated")) %>%
-  ggplot(aes(NumCells, fill = Metadata_compound_ID)) + 
-  geom_histogram(bins = 20) + 
-  facet_grid(Metadata_plating_density ~ Metadata_compound_ID + Metadata_line_condition, scales = "free") + 
+  ggplot(aes(NumCells, fill = Metadata_compound_ID)) +
+  geom_histogram(bins = 20) +
+  facet_grid(Metadata_plating_density ~ Metadata_compound_ID + Metadata_line_condition, scales = "free") +
   theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   theme(legend.position="bottom") +
-  ggtitle("Cell counts (proxy feature) from Cell Painting and MAP2 images", 
+  ggtitle("Cell counts (proxy feature) from Cell Painting and MAP2 images",
           subtitle = "Only untreated wells")
 ```
