@@ -1,0 +1,1 @@
+extend-exclude = ["0.archived-analysis", "1.run-workflows", "2.updates", "2019_05_28_Neuronal_Cell_Painting", "3.analysis", "4.neurons-analysis"]
