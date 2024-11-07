@@ -19,7 +19,7 @@ platemap %<>% mutate(condition_density = interaction(condition, plating_density)
 Display the platemap
 
 ```{r display_platemap}
-p <- 
+p <-
   platetools::raw_map(data =
                       as.character(platemap$condition_density),
                       well = platemap$well_position,
@@ -32,16 +32,16 @@ print(p)
 Sample a few wells (per condition) to analyze
 
 ```{r display_platemap_reduced}
-platemap_reduced <- 
-  platemap %>% 
-  mutate(condition_density = 
+platemap_reduced <-
+  platemap %>%
+  mutate(condition_density =
     case_when(
       str_detect(well_position, "^C|^D|^L|^M") & str_detect(well_position, "02$|03$|10$|11$|18$|19$") ~ as.character(condition_density),
       TRUE ~ "0SKIP"
     )
     )
 
-p <- 
+p <-
   platetools::raw_map(
     data = as.character(platemap_reduced$condition_density),
     well = platemap_reduced$well_position,
@@ -56,7 +56,7 @@ print(p)
 Display list of wells
 
 ```{r display_platemap_reduced_df}
-platemap_reduced %>% 
+platemap_reduced %>%
   filter(condition_density != "0SKIP") %>%
   select(well_position, plating_density, condition) %>%
   data.frame()
@@ -65,13 +65,13 @@ platemap_reduced %>%
 Make a list of corresponding images
 
 ```{r}
-load_data <- 
+load_data <-
   read_csv("../../../load_data_csv/NCP_PILOT_1/BR00106976/load_data.csv") %>%
-  select(-matches("Brightfield")) %>% 
-  inner_join(platemap_reduced %>% 
-               filter(condition_density != "0SKIP") %>% 
+  select(-matches("Brightfield")) %>%
+  inner_join(platemap_reduced %>%
+               filter(condition_density != "0SKIP") %>%
                select(well_position),
-             by = c("Metadata_Well" = "well_position")) 
+             by = c("Metadata_Well" = "well_position"))
 
 load_data %>%
   write_csv("output/subset_BR00106975_load_data.csv")
@@ -86,14 +86,14 @@ load_data %>%
   mutate(S3_OrigDNA  = str_c(PathName_OrigDNA , "/", FileName_OrigDNA )) %>%
   mutate(S3_OrigER   = str_c(PathName_OrigER  , "/", FileName_OrigER  )) %>%
   mutate(S3_OrigMito = str_c(PathName_OrigMito, "/", FileName_OrigMito)) %>%
-  mutate(S3_OrigRNA  = str_c(PathName_OrigRNA , "/", FileName_OrigRNA )) %>% 
+  mutate(S3_OrigRNA  = str_c(PathName_OrigRNA , "/", FileName_OrigRNA )) %>%
   select(matches("^S3")) %>%
   gather(channel, s3loc) %>%
   select(s3loc) %>%
   write_tsv("output/subset_BR00106975_files.txt", col_names = FALSE)
 ```
 
-Copy these files locally. 
+Copy these files locally.
 Replace the paths below as appropriate.
 
 ```
@@ -105,7 +105,7 @@ Create a load data file with relative paths. Edit `project_base_path` as appropr
 
 ```{r}
 project_base_path <- path.expand("~/work/projects/2019_05_28_Neuronal_Cell_Painting/")
-  
+
 read_csv("output/subset_BR00106975_load_data.csv") %>%
   mutate(PathName_OrigAGP  = str_replace(PathName_OrigAGP,  "/home/ubuntu/bucket/projects/2019_05_28_Neuronal_Cell_Painting/", project_base_path)) %>%
   mutate(PathName_OrigDNA  = str_replace(PathName_OrigDNA,  "/home/ubuntu/bucket/projects/2019_05_28_Neuronal_Cell_Painting/", project_base_path)) %>%
@@ -114,4 +114,3 @@ read_csv("output/subset_BR00106975_load_data.csv") %>%
   mutate(PathName_OrigRNA  = str_replace(PathName_OrigRNA,  "/home/ubuntu/bucket/projects/2019_05_28_Neuronal_Cell_Painting/", project_base_path)) %>%
   write_csv(path.expand("~/Desktop/subset_BR00106975_load_data_local.csv"))
 ```
-

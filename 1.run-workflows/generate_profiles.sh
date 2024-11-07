@@ -421,4 +421,3 @@ parallel \
   aws s3 sync \
   ../../{1}/${BATCH_ID}/ \
   s3://${BUCKET}/projects/${PROJECT_NAME}/workspace/{1}/${BATCH_ID}/ ::: audit backend batchfiles load_data_csv log metadata parameters scratch
-

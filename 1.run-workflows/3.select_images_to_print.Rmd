@@ -10,7 +10,7 @@ library(stringr)
 library(tidyverse)
 ```
 
-# Prepare load_data 
+# Prepare load_data
 
 ```{r prepare_load_data, message=FALSE}
 load_data <-
@@ -27,26 +27,26 @@ load_data <-
 
 convert_to_s3_url <- function(pathname, filename)  {
   file.path(
-      str_replace(pathname, 
-              "/home/ubuntu/bucket", 
+      str_replace(pathname,
+              "/home/ubuntu/bucket",
               "https://s3.amazonaws.com/imaging-platform"),
       filename
   )
-  
+
 }
 
 channels <- c("DNA", "ER", "RNA", "AGP", "Mito")
 
 for (channel in channels) {
   url_sym <- rlang::sym(str_c("URL_Orig", channel))
-  
+
   path_sym <- rlang::sym(str_c("PathName_Orig", channel))
-   
+
   file_sym <- rlang::sym(str_c("FileName_Orig", channel))
-   
-  load_data %<>% 
+
+  load_data %<>%
     mutate(!!url_sym := convert_to_s3_url((!!path_sym), (!!file_sym)))
-  
+
 }
 
 ```
@@ -55,7 +55,7 @@ for (channel in channels) {
 
 ```{r message=FALSE}
 
-datasets <- 
+datasets <-
   tribble(
     ~batch, ~plate,
     "NCP_STEM_1", "BR_NCP_STEM_1",
@@ -79,7 +79,7 @@ metadata <-
           })
 
 metadata %<>%
-  rename(Plate = plate_map_name, 
+  rename(Plate = plate_map_name,
          Well = well_position)
 
 names(metadata) <- str_c("Metadata_", names(metadata))
@@ -115,7 +115,7 @@ fieldIDs <- c(3, 5)
 ```{r}
 filenames_header <- paste0("FileName_Orig", channels)
 
-images <- 
+images <-
   load_data %>%
   select(Metadata_Batch, Metadata_Plate, Metadata_Well, Metadata_Row, Metadata_FieldID, matches("^URL_"), one_of(filenames_header)) %>%
   inner_join(metadata_sampled, by = c("Metadata_Batch", "Metadata_Plate", "Metadata_Well")) %>%
@@ -129,7 +129,7 @@ images_pivoted <-
   mutate(filename = basename(URL)) %>%
   select(Metadata_Plate, Metadata_Well, Metadata_Channel, filename, URL)
 
-images_pivoted %>% 
+images_pivoted %>%
   write_csv("data/sample_images.csv")
 
 ```
@@ -141,9 +141,9 @@ images %>%
 ```
 
 ```{r}
-images %>% 
-  distinct(Metadata_Batch, Metadata_Plate, Metadata_Well, Metadata_line_ID, Metadata_line_condition, Metadata_plating_density) %>% 
-  group_by(Metadata_Batch, Metadata_Plate, Metadata_line_ID, Metadata_line_condition, Metadata_plating_density) %>% 
+images %>%
+  distinct(Metadata_Batch, Metadata_Plate, Metadata_Well, Metadata_line_ID, Metadata_line_condition, Metadata_plating_density) %>%
+  group_by(Metadata_Batch, Metadata_Plate, Metadata_line_ID, Metadata_line_condition, Metadata_plating_density) %>%
   tally() %>%
   group_by(n) %>%
   tally(name = "n_unique_conditions")
@@ -163,7 +163,7 @@ mkdir -p $IMAGE_DIR
 
 cut -d"," -f1 data/sample_images.csv | grep -v Metadata_Plate| sort -u > /tmp/plates.txt
 
-parallel -a /tmp/plates.txt --no-run-if-empty mkdir -p $IMAGE_DIR/{} 
+parallel -a /tmp/plates.txt --no-run-if-empty mkdir -p $IMAGE_DIR/{}
 
 parallel \
  --header ".*\n" \
@@ -182,7 +182,7 @@ Below, we create `URL_Outline` using `URL_OrigDNA` as the starting point.
 Outlines are currently available only for `NCP_PILOT_3` and `NCP_PILOT_3B`
 
 `URL_OrigDNA`:
-https://s3.amazonaws.com/imaging-platform/projects/2019_05_28_Neuronal_Cell_Painting/workspace/analysis/NCP_PILOT_3/BR_NCP_PILOT_3/analysis/BR_NCP_PILOT_3-A18-3/r01c18f03p01-ch5sk1fk1fl1_Overlay.png	
+https://s3.amazonaws.com/imaging-platform/projects/2019_05_28_Neuronal_Cell_Painting/workspace/analysis/NCP_PILOT_3/BR_NCP_PILOT_3/analysis/BR_NCP_PILOT_3-A18-3/r01c18f03p01-ch5sk1fk1fl1_Overlay.png
 
 `URL_Outline`:
 https://s3.amazonaws.com/imaging-platform/projects/2019_05_28_Neuronal_Cell_Painting/NCP_PILOT_3/images/BR_NCP_PILOT_3/Images/r01c18f03p01-ch5sk1fk1fl1.tiff
@@ -236,15 +236,14 @@ outline_images <-
       )
   ) %>%
   select(matches("^Metadata"), URL_Outline)
-  
+
 outline_images %>%
   write_csv("data/sample_images_outline.csv")
 ```
 
 ```{r eval=FALSE, results='asis'}
 outline_images %>%
-  mutate(URL_Outline = str_c("[Outline](", URL_Outline, ")")) %>% 
+  mutate(URL_Outline = str_c("[Outline](", URL_Outline, ")")) %>%
   select(Metadata_Batch, Metadata_plating_density, Metadata_line_condition, Metadata_compound_ID, URL_Outline, everything()) %>%
-  knitr::kable() 
+  knitr::kable()
 ```
-

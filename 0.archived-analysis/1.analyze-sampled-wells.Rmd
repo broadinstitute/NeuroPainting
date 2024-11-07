@@ -16,61 +16,61 @@ backend_file <- "output/subset_BR00106975/backend/subset_BR00106975.rds"
 
 if (file.exists(backend_file)) {
   single_cell <- readRDS(backend_file)
-  
+
 } else {
   cytoplasm <- read_csv("output/subset_BR00106975/analysis/subset/Cytoplasm.csv")
-  
+
   names(cytoplasm) <- str_c("Cytoplasm_", names(cytoplasm))
-  
+
   nuclei <- read_csv("output/subset_BR00106975/analysis/subset/Nuclei.csv")
-  
+
   names(nuclei) <- str_c("Nuclei_", names(nuclei))
-  
-  images <- 
+
+  images <-
     read_csv("output/subset_BR00106975/analysis/subset/Image.csv") %>%
     select(ImageNumber, Metadata_Plate, Metadata_Well, Metadata_Site)
-  
-  single_cell <- 
-    nuclei %>% 
-    inner_join(cytoplasm, 
+
+  single_cell <-
+    nuclei %>%
+    inner_join(cytoplasm,
                by = c("Nuclei_ObjectNumber" = "Cytoplasm_Parent_Nuclei",
                       "Nuclei_ImageNumber" = "Cytoplasm_ImageNumber")) %>%
     rename(ImageNumber = Nuclei_ImageNumber) %>%
     inner_join(images)
-  
+
   metadata <- read_tsv("metadata/platemaps/CELLPAINTING.txt")
-  
+
   names(metadata) <- str_c("Metadata_", names(metadata))
-  
+
   single_cell %<>%
-    inner_join(metadata, 
+    inner_join(metadata,
                by = c("Metadata_Well" = "Metadata_well_position")) %>%
     select(matches("Metadata"), everything())
-  
+
   if (!dir.exists(dirname(backend_file))) {
       dir.create(dirname(backend_file), recursive = TRUE)
   }
-  
+
   single_cell %>%
-    saveRDS(backend_file)  
-  
+    saveRDS(backend_file)
+
 }
 
 ```
 
-Report cell counts 
+Report cell counts
 
 ```{r cell_counts}
-single_cell %>% 
+single_cell %>%
   group_by(Metadata_Well, Metadata_plating_density, Metadata_condition) %>%
   tally() %>%
-  ggplot(aes(as.factor(Metadata_plating_density), n)) + 
-  geom_jitter(height = 0, width = .1) + 
+  ggplot(aes(as.factor(Metadata_plating_density), n)) +
+  geom_jitter(height = 0, width = .1) +
   xlab("Plating density") +
   ylab("Cell count") +
   facet_wrap(~Metadata_condition)
 
-single_cell %>% 
+single_cell %>%
   group_by(Metadata_plating_density, Metadata_condition) %>%
   tally()
 ```
@@ -89,8 +89,8 @@ Filter out nuclei that seem like outliers based on area.
 This is a bit of hack because in theory, very large nuclei may be informative.
 
 ```{r}
-single_cell_filt <- 
-  single_cell %>% 
+single_cell_filt <-
+  single_cell %>%
   filter(Nuclei_AreaShape_Area < 2500)
 ```
 
@@ -100,28 +100,28 @@ How many cells are left? How many thrown out?
 single_cell_filt %>%
   nrow()
 
-single_cell %>% 
+single_cell %>%
   filter(Nuclei_AreaShape_Area >= 2500) %>%
   nrow()
 ```
 
 ```{r nuclei_area_violin}
-single_cell_filt %>% 
-  ggplot(aes(as.factor(Metadata_plating_density), Nuclei_AreaShape_Area)) + 
+single_cell_filt %>%
+  ggplot(aes(as.factor(Metadata_plating_density), Nuclei_AreaShape_Area)) +
   geom_violin() +
   xlab("Plating density") +
   facet_wrap(~Metadata_condition)
 ```
 
 
-To start with, select the lowest plating density (5000), and with glia for all further analysis. 
+To start with, select the lowest plating density (5000), and with glia for all further analysis.
 TODO:
-- The `no_glia` condition looks odd - shouldn't the nuclei be larger?  
+- The `no_glia` condition looks odd - shouldn't the nuclei be larger?
 
 ```{r}
-single_cell_glia_5k <- 
-  single_cell_filt %>% 
-  filter(Metadata_plating_density == 5000 & 
+single_cell_glia_5k <-
+  single_cell_filt %>%
+  filter(Metadata_plating_density == 5000 &
            Metadata_condition == "glia")
 
 ```
@@ -142,8 +142,8 @@ Filter out nuclei that seem like outliers based on area.
 This is a bit of hack because in theory, very large nuclei may be informative.
 
 ```{r}
-single_cell_glia_5k_filt <- 
-  single_cell_glia_5k %>% 
+single_cell_glia_5k_filt <-
+  single_cell_glia_5k %>%
   filter(Nuclei_AreaShape_Area < 2000)
 ```
 
@@ -153,7 +153,7 @@ How many cells are left? How many thrown out?
 single_cell_glia_5k_filt %>%
   nrow()
 
-single_cell_glia_5k %>% 
+single_cell_glia_5k %>%
   filter(Nuclei_AreaShape_Area >= 2000) %>%
   nrow()
 ```
@@ -177,16 +177,16 @@ model <- Mclust(log(1+single_cell_glia_5k_filt$Nuclei_AreaShape_Area), G=2, mode
 
 single_cell_glia_5k_filt %<>% mutate(Metadata_class = model$classification)
 
-small_nuclei_index <- 
-  single_cell_glia_5k_filt %>% 
-  group_by(Metadata_class) %>% 
+small_nuclei_index <-
+  single_cell_glia_5k_filt %>%
+  group_by(Metadata_class) %>%
   summarise(mean_area = mean(Nuclei_AreaShape_Area)) %>%
-  arrange(mean_area) %>% 
+  arrange(mean_area) %>%
   slice(1) %>%
-  extract2("Metadata_class") 
+  extract2("Metadata_class")
 
-single_cell_glia_5k_filt %<>% 
-  mutate(Metadata_class = 
+single_cell_glia_5k_filt %<>%
+  mutate(Metadata_class =
            ifelse(Metadata_class == small_nuclei_index, "small nuclei", "large nuclei")
          )
 
@@ -201,7 +201,7 @@ ggplot(single_cell_glia_5k_filt,
 
 Plot total DNA, using the same split (small nuclei, large nuclei) as above
 
-```{r dna_hist_split} 
+```{r dna_hist_split}
 ggplot(single_cell_glia_5k_filt,
        aes(Nuclei_Intensity_IntegratedIntensity_DNA, fill = Metadata_class)) +
   geom_histogram(binwidth = 3, position = "identity", alpha = 0.7)
@@ -225,14 +225,14 @@ ggplot(single_cell_glia_5k_filt %>% filter(Cytoplasm_Intensity_IntegratedIntensi
 
 
 ```{r}
-single_cell_glia_5k_filt_mat <- 
-  single_cell_glia_5k_filt %>% 
+single_cell_glia_5k_filt_mat <-
+  single_cell_glia_5k_filt %>%
   select(matches("^Nuclei_|^Cytoplasm_|Metadata_class"))
 
-dim(single_cell_glia_5k_filt_mat)  
+dim(single_cell_glia_5k_filt_mat)
 ```
 
-Next step: 
+Next step:
 
 - Filter these 1432 features by removing redundant features
 

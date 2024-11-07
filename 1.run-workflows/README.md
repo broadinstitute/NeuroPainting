@@ -121,4 +121,3 @@ Sync them to this repo
 mkdir -p  ${repo_working_dir}/profiles/${BATCH_ID}/
 rsync -arzv --include="*/" --include="*.gz" --exclude "*" ${external_backend_dir}/ ${repo_working_dir}/profiles/${BATCH_ID}/
 ```
-
