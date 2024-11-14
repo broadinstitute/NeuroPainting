@@ -5,12 +5,6 @@ Our work will bring together groups at the Imaging Platform and the Stanley Cent
 We anticipate that the workflows we will create will facilitate phenotypic screening of neurons at a scale that begins to match the transcriptional revolution, and constitute a key technology to help move from genetics to cellular phenotypes to actionable biology and mechanisms.
 Gaining insight into neuronal morphology in health and disease will illuminate previously unknown aspects of neuronal biology, enable the interrogation of the effect of the hundreds of genetic risk variants on cellular phenotypes, and greatly complement several existing technologies pioneered at the Broad Institute such as CRISPR screens, drug screens, optical profiling and in situ sequencing to catalyze unprecedented discoveries that link genes and perturbations to neuronal phenotypes.
 
-## Documents
-
-**SPARC Project Proposal:** [(gdoc)](https://docs.google.com/document/d/19uRqfbbwfTVl0vm1ubchO0tccvPs7kpXKlHxpxEDaHU/edit)
-
-**Planning document:** [(gdoc)](https://docs.google.com/document/d/1zEamFSAhJfkR7JPTmALCSpijIo1l7a-KzY32LPFUR48/edit)
-
 ## Dataset summary
 
 There are 48 IPSC lines available for this project from the [22q cohort](https://docs.google.com/spreadsheets/d/1ShXDddzO5mK7-C6G_BQYM3H7y8-2sGOOUn5uRX6SXVk/edit#gid=0):
