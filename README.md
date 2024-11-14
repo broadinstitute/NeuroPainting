@@ -102,6 +102,8 @@ Follow these [instructions](https://thecoatlessprofessor.com/programming/cpp/r-c
 
 #### Creating a new R notebook
 
+<details>
+
 Here's an example directory structure for a directory `<project>/<module-name>` containing an R notebook.
 Note that R and Python notebooks can co-exist in the same directory
 
@@ -123,3 +125,6 @@ Here are the steps to follow to create add such a notebook to this repo
 - Edit `0.knit-notebooks.R` to add `render_notebook("1.inspect-cp221")`, which will render this notebook in markdown int the `knit_notebooks` directory
 - Now continue doing your analysis in `1.inspect-cp221.Rmd` and run things interactively as you would
 - When its time to commit, generate the markdown for the notebook by running `0.knit-notebooks.R`. Ensure that your current working directory is the parent directory of `0.knit-notebooks.R` before doing so. As you add more notebooks to the directory, `0.knit-notebooks.R` will have more entries in it, but you may want to only render your latest notebook. In this case, you'd need to run things by hand: first run the function definition for `render_notebook()` and then run `render_notebook("1.inspect-data")`. This will render the file `1.inspect-data.md` along with the figures in `1.inspect-data_files`. You should commit all of this to the repo.
+  
+</details>
+
